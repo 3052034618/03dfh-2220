@@ -80,7 +80,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .summary-btn{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
 .summary-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .summary-btn.primary{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan)}
-.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .summary-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px}
 .summary-card h4{font-size:.85rem;color:var(--text-primary);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .summary-card .count{font-size:1.5rem;font-weight:700;margin-bottom:8px}
@@ -89,6 +89,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .summary-list li{font-size:.75rem;color:var(--text-secondary);padding:3px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
 .summary-list li:last-child{border-bottom:none}
 .summary-list li .plate{color:var(--text-primary);font-weight:600}
+
+.summary-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.summary-detail-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px}
+.summary-detail-card h4{font-size:.85rem;color:var(--text-primary);margin-bottom:10px}
+.detail-table{width:100%;font-size:.75rem;border-collapse:collapse}
+.detail-table th,.detail-table td{padding:5px 8px;text-align:left;border-bottom:1px solid var(--border)}
+.detail-table th{color:var(--text-muted);font-weight:500;font-size:.7rem}
+.detail-table td{color:var(--text-secondary)}
+.detail-table td:first-child{color:var(--text-primary);font-weight:500}
+.detail-table .red{color:var(--red)}.detail-table .orange{color:var(--orange)}.detail-table .purple{color:var(--purple)}.detail-table .blue{color:var(--blue)}
 
 .followup-form{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:16px}
 .followup-form h4{font-size:.9rem;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:6px}
@@ -348,6 +358,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
     </div>
   </div>
   <div class="summary-grid" id="summaryGrid"></div>
+  <div class="summary-detail-grid" id="summaryDetail"></div>
 </div>
 
 <div class="filter-bar">
@@ -535,9 +546,15 @@ function isOverdue(v) {
   const disp = dispositions[v.id]
   if (!disp || !disp.createdAt) return false
   if (disp.steps.every(s => s.status === 'completed')) return false
-  const created = parseTimeStr(disp.createdAt)
-  const now = new Date()
-  const diffMin = (now - created) / 60000
+  
+  let createdTime
+  if (typeof disp.createdAt === 'number') {
+    createdTime = disp.createdAt
+  } else {
+    createdTime = parseTimeStr(disp.createdAt).getTime()
+  }
+  
+  const diffMin = (Date.now() - createdTime) / 60000
   return diffMin > OVERDUE_MINUTES
 }
 
@@ -675,6 +692,8 @@ function getTodoVehicles() {
   VEHICLES.forEach(v => {
     const level = getWarningLevel(v)
     const status = getDispositionStatus(v)
+    const disp = dispositions[v.id]
+    const isDone = status === 'done'
     
     let include = false
     let priority = 0
@@ -688,23 +707,23 @@ function getTodoVehicles() {
       include = true
       priority = 9
       type = 'followup'
-    } else if (level === 'red') {
-      include = true
-      priority = 8
-      type = 'critical'
-    } else if (level === 'orange') {
-      include = true
-      priority = 7
-      type = 'warning'
     } else if (status === 'inprogress') {
       include = true
       priority = 6
       type = 'inprogress'
-    } else if (level === 'yellow' && status === 'pending') {
+    } else if (!isDone && level === 'red') {
+      include = true
+      priority = 8
+      type = 'critical'
+    } else if (!isDone && level === 'orange') {
+      include = true
+      priority = 7
+      type = 'warning'
+    } else if (!isDone && level === 'yellow' && status === 'pending') {
       include = true
       priority = 5
       type = 'warning'
-    } else if (status === 'pending' && v.currentTemp > v.tempMax - 3) {
+    } else if (!isDone && status === 'pending' && v.currentTemp > v.tempMax - 3) {
       include = true
       priority = 4
       type = 'attention'
@@ -798,7 +817,7 @@ function renderTodo() {
     return
   }
 
-  grid.innerHTML = todos.slice(0, 8).map(t => {
+  grid.innerHTML = todos.map(t => {
     const v = t.vehicle
     const causes = getCauses(v)
     const statusLabels = {overdue:'已超时',followup:'待跟进',inprogress:'处置中'}
@@ -834,25 +853,39 @@ function getShiftSummaryData() {
     const level = getWarningLevel(v)
     const status = getDispositionStatus(v)
     const contacts = contactRecords[v.id] || []
-    const lastContact = contacts[contacts.length - 1]
+    const lastContact = contacts[0]
+    
+    const isNoAnswer = lastContact && lastContact.status === 'failed'
     
     if (level === 'red') summary.red.push(v)
     if (level === 'orange') summary.orange.push(v)
     if (status === 'overdue') summary.overdue.push(v)
-    if (lastContact && lastContact.status === 'failed') summary.noAnswer.push(v)
+    if (isNoAnswer) summary.noAnswer.push(v)
     if (status === 'followup') summary.pendingReview.push(v)
     
-    if (!summary.byRoute[v.route]) summary.byRoute[v.route] = {red:0,orange:0,overdue:0,total:0}
+    if (!summary.byRoute[v.route]) {
+      summary.byRoute[v.route] = {
+        red: 0, orange: 0, overdue: 0, noAnswer: 0, pendingReview: 0, total: 0
+      }
+    }
     summary.byRoute[v.route].total++
     if (level === 'red') summary.byRoute[v.route].red++
     if (level === 'orange') summary.byRoute[v.route].orange++
     if (status === 'overdue') summary.byRoute[v.route].overdue++
+    if (isNoAnswer) summary.byRoute[v.route].noAnswer++
+    if (status === 'followup') summary.byRoute[v.route].pendingReview++
     
-    if (!summary.byCarrier[v.carrier]) summary.byCarrier[v.carrier] = {red:0,orange:0,overdue:0,total:0}
+    if (!summary.byCarrier[v.carrier]) {
+      summary.byCarrier[v.carrier] = {
+        red: 0, orange: 0, overdue: 0, noAnswer: 0, pendingReview: 0, total: 0
+      }
+    }
     summary.byCarrier[v.carrier].total++
     if (level === 'red') summary.byCarrier[v.carrier].red++
     if (level === 'orange') summary.byCarrier[v.carrier].orange++
     if (status === 'overdue') summary.byCarrier[v.carrier].overdue++
+    if (isNoAnswer) summary.byCarrier[v.carrier].noAnswer++
+    if (status === 'followup') summary.byCarrier[v.carrier].pendingReview++
   })
   
   return summary
@@ -887,25 +920,35 @@ function generateShiftSummaryText() {
     text += '\n'
   }
   
-  const routesWithIssues = Object.entries(s.byRoute).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0)
+  if (s.noAnswer.length > 0) {
+    text += '📞 已联系未接通车辆：\n'
+    s.noAnswer.forEach(v => {
+      text += '  ' + v.plate + ' - ' + v.route + ' - ' + v.driver + ' ' + v.phone + '\n'
+    })
+    text += '\n'
+  }
+  
+  const routesWithIssues = Object.entries(s.byRoute).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0 || d.noAnswer > 0 || d.pendingReview > 0)
   if (routesWithIssues.length > 0) {
     text += '🛣️  按线路汇总：\n'
     routesWithIssues.forEach(([route, data]) => {
-      text += '  ' + route + '：红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' / 共' + data.total + '辆\n'
+      text += '  ' + route + '：\n'
+      text += '    红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' 未接' + data.noAnswer + ' 待复' + data.pendingReview + ' / 共' + data.total + '辆\n'
     })
     text += '\n'
   }
   
-  const carriersWithIssues = Object.entries(s.byCarrier).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0)
+  const carriersWithIssues = Object.entries(s.byCarrier).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0 || d.noAnswer > 0 || d.pendingReview > 0)
   if (carriersWithIssues.length > 0) {
     text += '🚚 按承运商汇总：\n'
     carriersWithIssues.forEach(([carrier, data]) => {
-      text += '  ' + carrier + '：红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' / 共' + data.total + '辆\n'
+      text += '  ' + carrier + '：\n'
+      text += '    红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' 未接' + data.noAnswer + ' 待复' + data.pendingReview + ' / 共' + data.total + '辆\n'
     })
     text += '\n'
   }
   
-  text += '💡 交班建议：请下一班优先跟进红色预警和超时车辆，及时联系未接通司机。'
+  text += '💡 交班建议：请下一班优先跟进红色预警和超时车辆，及时联系未接通司机，按时完成跟进复核。'
   
   return text
 }
@@ -938,6 +981,31 @@ function renderShiftSummary() {
     <li><span class="plate">${v.plate}</span><span>${v.route}</span></li>
   `).join('') + (arr.length > max ? `<li style="color:var(--text-muted);font-style:italic">...还有 ${arr.length - max} 辆</li>` : '')
   
+  const renderDetailTable = (data, nameKey) => {
+    const entries = Object.entries(data).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0 || d.noAnswer > 0 || d.pendingReview > 0)
+    if (entries.length === 0) return '<div style="color:var(--text-muted);font-size:.75rem">暂无异常</div>'
+    return `
+      <table class="detail-table">
+        <thead>
+          <tr><th>${nameKey}</th><th>红</th><th>橙</th><th>超时</th><th>未接</th><th>待复</th><th>总计</th></tr>
+        </thead>
+        <tbody>
+          ${entries.map(([name, d]) => `
+            <tr>
+              <td>${name}</td>
+              <td class="red">${d.red}</td>
+              <td class="orange">${d.orange}</td>
+              <td class="purple">${d.overdue}</td>
+              <td class="orange">${d.noAnswer}</td>
+              <td class="blue">${d.pendingReview}</td>
+              <td>${d.total}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `
+  }
+  
   grid.innerHTML = `
     <div class="summary-card">
       <h4>🔴 红色预警</h4>
@@ -965,6 +1033,20 @@ function renderShiftSummary() {
       <ul class="summary-list">${s.pendingReview.length > 0 ? renderList(s.pendingReview) : '<li><span>暂无</span></li>'}</ul>
     </div>
   `
+  
+  const detailContainer = document.getElementById('summaryDetail')
+  if (detailContainer) {
+    detailContainer.innerHTML = `
+      <div class="summary-detail-card">
+        <h4>🛣️  按线路汇总</h4>
+        ${renderDetailTable(s.byRoute, '线路')}
+      </div>
+      <div class="summary-detail-card">
+        <h4>🚚 按承运商汇总</h4>
+        ${renderDetailTable(s.byCarrier, '承运商')}
+      </div>
+    `
+  }
 }
 
 function renderList() {
@@ -1258,7 +1340,7 @@ function openDisposition(vehicleId) {
         {id:'record',title:'记录处理结果',desc:'填写处置结果和后续跟进事项',status:'pending',time:null},
       ],
       result: '',
-      createdAt: new Date().toLocaleTimeString()
+      createdAt: Date.now()
     }
     saveToStorage()
     addEvent(v.id, 'disposition', '开始处置流程', 'green')
