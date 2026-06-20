@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冷链车队调度看板 - 回温风险监控</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-primary:#070b14;--bg-secondary:#0f1623;--bg-card:#151d2e;--bg-card-hover:#1a2440;
+  --border:#1e2a42;--border-light:#2a3a5c;
+  --text-primary:#e2e8f0;--text-secondary:#8b9ab5;--text-muted:#5a6a85;
+  --yellow:#fbbf24;--yellow-bg:rgba(251,191,36,.12);--yellow-border:rgba(251,191,36,.35);
+  --orange:#f97316;--orange-bg:rgba(249,115,22,.12);--orange-border:rgba(249,115,22,.35);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.12);--red-border:rgba(239,68,68,.45);
+  --cyan:#22d3ee;--cyan-bg:rgba(34,211,238,.1);--cyan-border:rgba(34,211,238,.3);
+  --green:#34d399;--green-bg:rgba(52,211,153,.1);
+}
+html{font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg-secondary)}::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+
+.header{background:linear-gradient(180deg,rgba(15,22,35,.98),rgba(15,22,35,.92));border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.header-left{display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--cyan),#0891b2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:1.2rem;font-weight:700;letter-spacing:.5px}
+.logo-text span{color:var(--cyan)}
+.clock{font-size:1.1rem;font-variant-numeric:tabular-nums;color:var(--text-secondary);font-weight:500}
+
+.stats-bar{display:flex;gap:8px;padding:12px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border)}
+.stat-card{flex:1;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:12px;transition:all .2s}
+.stat-card:hover{border-color:var(--border-light)}
+.stat-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.stat-icon.total{background:var(--cyan-bg);color:var(--cyan)}
+.stat-icon.yellow{background:var(--yellow-bg);color:var(--yellow)}
+.stat-icon.orange{background:var(--orange-bg);color:var(--orange)}
+.stat-icon.red{background:var(--red-bg);color:var(--red)}
+.stat-info{display:flex;flex-direction:column}
+.stat-label{font-size:.75rem;color:var(--text-muted);margin-bottom:2px}
+.stat-value{font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums}
+.stat-value.yellow{color:var(--yellow)}.stat-value.orange{color:var(--orange)}.stat-value.red{color:var(--red)}
+
+.filter-bar{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.filter-group{display:flex;align-items:center;gap:6px}
+.filter-label{font-size:.75rem;color:var(--text-muted);white-space:nowrap}
+.filter-select{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);padding:6px 12px;font-size:.85rem;outline:none;cursor:pointer;min-width:120px}
+.filter-select:focus{border-color:var(--cyan)}
+.filter-select option{background:var(--bg-card);color:var(--text-primary)}
+.filter-divider{width:1px;height:24px;background:var(--border);margin:0 4px}
+.sort-btns{display:flex;gap:4px;margin-left:auto}
+.sort-btn{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);padding:6px 14px;font-size:.8rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+.sort-btn:hover{border-color:var(--border-light);color:var(--text-primary)}
+.sort-btn.active{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan)}
+
+.vehicle-list{padding:12px 24px 24px;display:flex;flex-direction:column;gap:8px;min-height:calc(100vh - 200px)}
+.vehicle-row{display:grid;grid-template-columns:8px 90px 1.2fr .8fr .8fr 1fr 1fr 1fr 1fr 100px;align-items:center;gap:0;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0;cursor:pointer;transition:all .2s;overflow:hidden;position:relative}
+.vehicle-row:hover{border-color:var(--border-light);background:var(--bg-card-hover);transform:translateX(2px)}
+.vehicle-row.warning-yellow{border-left:none}
+.vehicle-row.warning-yellow .risk-indicator{background:var(--yellow)}
+.vehicle-row.warning-orange{border-left:none}
+.vehicle-row.warning-orange .risk-indicator{background:var(--orange)}
+.vehicle-row.warning-red{border-left:none}
+.vehicle-row.warning-red .risk-indicator{background:var(--red);animation:pulse-red 2s infinite}
+.vehicle-row.warning-normal .risk-indicator{background:var(--green)}
+
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
+
+.risk-indicator{width:8px;align-self:stretch;min-height:56px}
+.cell{padding:10px 12px;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell-plate{font-weight:700;font-size:.95rem;color:var(--text-primary)}
+.cell-route{color:var(--text-secondary)}
+.cell-carrier{color:var(--text-secondary)}
+.cell-cargo{display:flex;align-items:center;gap:6px}
+.cargo-tag{font-size:.7rem;padding:2px 8px;border-radius:4px;background:rgba(34,211,238,.1);color:var(--cyan);border:1px solid rgba(34,211,238,.2)}
+.cell-temp{font-weight:700;font-variant-numeric:tabular-nums;font-size:1rem}
+.cell-temp.warning-yellow{color:var(--yellow)}.cell-temp.warning-orange{color:var(--orange)}.cell-temp.warning-red{color:var(--red)}
+.temp-range{font-size:.7rem;color:var(--text-muted);margin-top:1px}
+.cell-rise{font-variant-numeric:tabular-nums;font-weight:600}
+.cell-rise.high{color:var(--orange)}
+.cell-door{font-size:.8rem;color:var(--text-secondary)}
+.cell-cause{display:flex;flex-wrap:wrap;gap:4px}
+.cause-tag{font-size:.7rem;padding:2px 7px;border-radius:4px;border:1px solid var(--border);color:var(--text-secondary);background:var(--bg-secondary)}
+.cause-tag.critical{border-color:var(--red-border);color:var(--red);background:var(--red-bg)}
+.cell-action{text-align:center}
+.action-btn{background:var(--cyan-bg);border:1px solid var(--cyan-border);color:var(--cyan);border-radius:6px;padding:5px 14px;font-size:.78rem;cursor:pointer;transition:all .2s;font-weight:500}
+.action-btn:hover{background:rgba(34,211,238,.2)}
+.action-btn.handled{background:var(--green-bg);border-color:rgba(52,211,153,.3);color:var(--green)}
+
+.list-header{display:grid;grid-template-columns:8px 90px 1.2fr .8fr .8fr 1fr 1fr 1fr 1fr 100px;gap:0;padding:4px 0;margin-bottom:2px}
+.list-header .hcell{padding:6px 12px;font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;width:720px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.modal-header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg-secondary);z-index:1}
+.modal-title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:10px}
+.modal-close{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);width:32px;height:32px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-body{padding:24px}
+
+.vehicle-info{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.info-block{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px 16px}
+.info-block .label{font-size:.7rem;color:var(--text-muted);margin-bottom:4px}
+.info-block .value{font-size:1rem;font-weight:600}
+.info-block .value.danger{color:var(--red)}
+.info-block .value.warn{color:var(--orange)}
+.info-block .value.caution{color:var(--yellow)}
+
+.cause-analysis{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px}
+.cause-analysis h3{font-size:.9rem;margin-bottom:12px;color:var(--text-secondary)}
+.cause-list{display:flex;flex-direction:column;gap:8px}
+.cause-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-secondary);border-radius:6px;border:1px solid var(--border)}
+.cause-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cause-dot.high{background:var(--red)}.cause-dot.medium{background:var(--orange)}.cause-dot.low{background:var(--yellow)}
+.cause-text{flex:1;font-size:.85rem}
+.cause-confidence{font-size:.75rem;color:var(--text-muted)}
+
+.disposition-section{margin-bottom:0}
+.disposition-section h3{font-size:.9rem;margin-bottom:12px;color:var(--text-secondary)}
+.steps{display:flex;flex-direction:column;gap:10px}
+.step{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;transition:all .2s}
+.step.completed{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.05)}
+.step.active{border-color:var(--cyan-border);background:var(--cyan-bg)}
+.step-indicator{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;transition:all .2s}
+.step.completed .step-indicator{border-color:var(--green);background:var(--green);color:#fff}
+.step.active .step-indicator{border-color:var(--cyan);background:var(--cyan-bg);color:var(--cyan)}
+.step-content{flex:1}
+.step-title{font-weight:600;font-size:.9rem;margin-bottom:4px}
+.step-desc{font-size:.78rem;color:var(--text-muted);margin-bottom:8px}
+.step-meta{font-size:.75rem;color:var(--text-secondary)}
+.step-actions{display:flex;gap:6px;margin-top:8px}
+.step-btn{padding:5px 14px;border-radius:6px;font-size:.78rem;cursor:pointer;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);transition:all .15s}
+.step-btn:hover{border-color:var(--cyan-border);color:var(--cyan)}
+.step-btn.primary{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan)}
+.step-btn.primary:hover{background:rgba(34,211,238,.2)}
+.step-btn.danger{border-color:var(--red-border);color:var(--red);background:var(--red-bg)}
+
+.result-section{margin-top:16px;padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px}
+.result-section h4{font-size:.85rem;margin-bottom:8px;color:var(--text-secondary)}
+.result-textarea{width:100%;min-height:60px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);padding:8px 12px;font-size:.85rem;resize:vertical;outline:none;font-family:inherit}
+.result-textarea:focus{border-color:var(--cyan)}
+
+.temp-chart{height:80px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-bottom:20px;position:relative;overflow:hidden}
+.temp-chart canvas{width:100%;height:100%}
+.temp-chart-label{position:absolute;top:6px;right:10px;font-size:.65rem;color:var(--text-muted)}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.empty-state .icon{font-size:3rem;margin-bottom:12px;opacity:.3}
+.empty-state p{font-size:.95rem}
+
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.vehicle-row{animation:slideIn .3s ease-out}
+
+.notification{position:fixed;top:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:8px;font-size:.85rem;animation:slideIn .3s ease-out;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.toast.red{background:var(--red);color:#fff}.toast.orange{background:var(--orange);color:#fff}.toast.yellow{background:var(--yellow);color:#000}.toast.green{background:var(--green);color:#000}
+
+.sound-toggle{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);padding:6px 12px;font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .2s}
+.sound-toggle:hover{border-color:var(--border-light)}
+.sound-toggle.on{color:var(--cyan);border-color:var(--cyan-border)}
+
+@media(max-width:1200px){
+  .vehicle-row{grid-template-columns:8px 80px 1fr .8fr 1fr 1fr 100px}
+  .vehicle-row .cell-carrier,.vehicle-row .cell-cause,.vehicle-row .cell-door{display:none}
+  .list-header{grid-template-columns:8px 80px 1fr .8fr 1fr 1fr 100px}
+  .list-header .hcell:nth-child(4),.list-header .hcell:nth-child(8),.list-header .hcell:nth-child(9){display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">
+      <div class="logo-icon">❄</div>
+      <div class="logo-text"><span>冷链</span>车队调度看板</div>
+    </div>
+    <div style="font-size:.75rem;color:var(--text-muted);background:var(--bg-card);padding:3px 10px;border-radius:4px;border:1px solid var(--border)">回温风险监控中心</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button class="sound-toggle on" id="soundToggle" onclick="toggleSound()">🔊 声音</button>
+    <div class="clock" id="clock"></div>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">线路</span>
+    <select class="filter-select" id="filterRoute" onchange="applyFilters()"><option value="">全部线路</option></select>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">承运商</span>
+    <select class="filter-select" id="filterCarrier" onchange="applyFilters()"><option value="">全部承运商</option></select>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">货品</span>
+    <select class="filter-select" id="filterCargo" onchange="applyFilters()"><option value="">全部货品</option></select>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">预警</span>
+    <select class="filter-select" id="filterWarning" onchange="applyFilters()">
+      <option value="">全部等级</option>
+      <option value="red">🔴 红色</option>
+      <option value="orange">🟠 橙色</option>
+      <option value="yellow">🟡 黄色</option>
+      <option value="normal">🟢 正常</option>
+    </select>
+  </div>
+  <div class="sort-btns">
+    <button class="sort-btn active" data-sort="risk" onclick="setSort('risk')">风险优先</button>
+    <button class="sort-btn" data-sort="temp" onclick="setSort('temp')">温度排序</button>
+    <button class="sort-btn" data-sort="rise" onclick="setSort('rise')">升温时长</button>
+  </div>
+</div>
+
+<div class="list-header">
+  <div class="hcell"></div>
+  <div class="hcell">车牌号</div>
+  <div class="hcell">线路</div>
+  <div class="hcell">承运商</div>
+  <div class="hcell">货品</div>
+  <div class="hcell">当前厢温</div>
+  <div class="hcell">连续升温</div>
+  <div class="hcell">最近开门</div>
+  <div class="hcell">可能原因</div>
+  <div class="hcell">操作</div>
+</div>
+
+<div class="vehicle-list" id="vehicleList"></div>
+
+<div class="notification" id="notifications"></div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+const VEHICLES = [
+  {id:'V001',plate:'京AF8821',route:'京沪线',carrier:'顺冷达',cargo:'冷冻肉类',cargoTag:'冷冻',tempMin:-20,tempMax:-15,currentTemp:-15.2,setTemp:-18,continuousRise:38,lastDoorOpen:'22:41',doorCount:6,refrigeratorStatus:'running',trafficStatus:'normal',location:'G2 天津段',driver:'张伟',phone:'138****5521',history:[-18,-17.8,-17.5,-17.1,-16.7,-16.3,-15.9,-15.5,-15.2]},
+  {id:'V002',plate:'京BK3347',route:'京广线',carrier:'中冷物流',cargo:'冰淇淋',cargoTag:'冷冻',tempMin:-25,tempMax:-20,currentTemp:-20.8,setTemp:-23,continuousRise:0,lastDoorOpen:'21:15',doorCount:1,refrigeratorStatus:'running',trafficStatus:'normal',location:'G4 郑州段',driver:'李强',phone:'139****8834',history:[-23,-23.1,-23,-22.9,-23,-22.8,-23,-22.9,-20.8]},
+  {id:'V003',plate:'沪CD7652',route:'沪蓉线',carrier:'鲜达冷链',cargo:'鲜奶制品',cargoTag:'冷藏',tempMin:2,tempMax:6,currentTemp:5.6,setTemp:4,continuousRise:25,lastDoorOpen:'23:02',doorCount:4,refrigeratorStatus:'running',trafficStatus:'congested',location:'G50 合肥段',driver:'王军',phone:'137****2209',history:[4,4.2,4.5,4.7,4.9,5.1,5.2,5.4,5.6]},
+  {id:'V004',plate:'粤EF1098',route:'广昆线',carrier:'顺冷达',cargo:'新鲜蔬果',cargoTag:'冷藏',tempMin:2,tempMax:8,currentTemp:8.3,setTemp:5,continuousRise:52,lastDoorOpen:'23:18',doorCount:7,refrigeratorStatus:'stopped',trafficStatus:'normal',location:'G80 肇庆段',driver:'陈明',phone:'136****4417',history:[5,5.5,5.9,6.3,6.8,7.2,7.6,7.9,8.3]},
+  {id:'V005',plate:'京GH2234',route:'京港澳线',carrier:'中冷物流',cargo:'疫苗制剂',cargoTag:'医药',tempMin:2,tempMax:8,currentTemp:6.1,setTemp:5,continuousRise:15,lastDoorOpen:'22:30',doorCount:2,refrigeratorStatus:'running',trafficStatus:'congested',location:'G4 石家庄段',driver:'赵磊',phone:'135****7762',history:[5,5.1,5.2,5.4,5.5,5.6,5.7,5.9,6.1]},
+  {id:'V006',plate:'鲁JK8890',route:'济广线',carrier:'鲁冷运输',cargo:'冷冻水产',cargoTag:'冷冻',tempMin:-22,tempMax:-18,currentTemp:-17.5,setTemp:-20,continuousRise:47,lastDoorOpen:'23:10',doorCount:5,refrigeratorStatus:'stopped',trafficStatus:'congested',location:'G35 菏泽段',driver:'刘涛',phone:'158****3390',history:[-20,-19.7,-19.4,-19.1,-18.8,-18.5,-18.2,-17.9,-17.5]},
+  {id:'V007',plate:'苏LM4456',route:'沪蓉线',carrier:'鲜达冷链',cargo:'冷藏肉类',cargoTag:'冷藏',tempMin:-2,tempMax:4,currentTemp:3.2,setTemp:2,continuousRise:18,lastDoorOpen:'22:55',doorCount:3,refrigeratorStatus:'running',trafficStatus:'normal',location:'G50 南京段',driver:'孙鹏',phone:'186****5518',history:[2,2.1,2.3,2.5,2.6,2.7,2.8,3,3.2]},
+  {id:'V008',plate:'浙NP7723',route:'杭瑞线',carrier:'浙冷快运',cargo:'巧克力',cargoTag:'冷藏',tempMin:12,tempMax:18,currentTemp:14.5,setTemp:15,continuousRise:0,lastDoorOpen:'21:40',doorCount:1,refrigeratorStatus:'running',trafficStatus:'normal',location:'G56 杭州段',driver:'周杰',phone:'133****8807',history:[15,15,14.9,15,14.8,15,14.9,14.7,14.5]},
+  {id:'V009',plate:'川QR3310',route:'成渝线',carrier:'蜀冷物流',cargo:'冷冻面点',cargoTag:'冷冻',tempMin:-18,tempMax:-15,currentTemp:-14.2,setTemp:-16,continuousRise:63,lastDoorOpen:'23:25',doorCount:8,refrigeratorStatus:'stopped',trafficStatus:'congested',location:'G76 内江段',driver:'黄勇',phone:'151****6643',history:[-16,-15.8,-15.6,-15.5,-15.2,-15,-14.8,-14.5,-14.2]},
+  {id:'V010',plate:'鄂ST5501',route:'京港澳线',carrier:'中冷物流',cargo:'生物制剂',cargoTag:'医药',tempMin:2,tempMax:8,currentTemp:8.1,setTemp:5,continuousRise:41,lastDoorOpen:'23:05',doorCount:5,refrigeratorStatus:'running',trafficStatus:'congested',location:'G4 武汉段',driver:'吴刚',phone:'189****2214',history:[5,5.4,5.8,6.1,6.5,6.9,7.2,7.6,8.1]},
+  {id:'V011',plate:'闽UV9987',route:'厦蓉线',carrier:'闽冷运输',cargo:'鲜切花卉',cargoTag:'冷藏',tempMin:2,tempMax:8,currentTemp:4.8,setTemp:4,continuousRise:8,lastDoorOpen:'22:20',doorCount:1,refrigeratorStatus:'running',trafficStatus:'normal',location:'G76 龙岩段',driver:'郑浩',phone:'137****9950',history:[4,4.1,4.2,4.3,4.4,4.5,4.5,4.7,4.8]},
+  {id:'V012',plate:'粤WX6634',route:'广昆线',carrier:'顺冷达',cargo:'冷冻禽肉',cargoTag:'冷冻',tempMin:-20,tempMax:-15,currentTemp:-16.8,setTemp:-18,continuousRise:12,lastDoorOpen:'22:48',doorCount:2,refrigeratorStatus:'running',trafficStatus:'normal',location:'G80 南宁段',driver:'梁峰',phone:'138****1123',history:[-18,-18,-17.9,-17.8,-17.7,-17.6,-17.4,-17.1,-16.8]},
+  {id:'V013',plate:'辽YZ1128',route:'京哈线',carrier:'辽冷快运',cargo:'速冻食品',cargoTag:'冷冻',tempMin:-22,tempMax:-18,currentTemp:-17.8,setTemp:-20,continuousRise:35,lastDoorOpen:'22:58',doorCount:4,refrigeratorStatus:'running',trafficStatus:'congested',location:'G1 锦州段',driver:'马超',phone:'155****4477',history:[-20,-19.8,-19.6,-19.4,-19.2,-19,-18.8,-18.3,-17.8]},
+  {id:'V014',plate:'吉AB2890',route:'京哈线',carrier:'辽冷快运',cargo:'冷冻牛肉',cargoTag:'冷冻',tempMin:-20,tempMax:-15,currentTemp:-18.2,setTemp:-18,continuousRise:5,lastDoorOpen:'21:50',doorCount:1,refrigeratorStatus:'running',trafficStatus:'normal',location:'G1 长春段',driver:'金波',phone:'159****3356',history:[-18,-18,-18.1,-18.1,-18.2,-18.2,-18.2,-18.2,-18.2]},
+  {id:'V015',plate:'湘CD4477',route:'京港澳线',carrier:'鲜达冷链',cargo:'冷藏乳品',cargoTag:'冷藏',tempMin:0,tempMax:4,currentTemp:3.9,setTemp:2,continuousRise:33,lastDoorOpen:'23:15',doorCount:6,refrigeratorStatus:'running',trafficStatus:'congested',location:'G4 长沙段',driver:'谢飞',phone:'176****8890',history:[2,2.2,2.4,2.7,2.9,3.1,3.3,3.6,3.9]},
+  {id:'V016',plate:'赣EF8801',route:'沪昆线',carrier:'赣冷物流',cargo:'冷藏水果',cargoTag:'冷藏',tempMin:0,tempMax:5,currentTemp:1.8,setTemp:2,continuousRise:0,lastDoorOpen:'20:30',doorCount:0,refrigeratorStatus:'running',trafficStatus:'normal',location:'G60 南昌段',driver:'徐亮',phone:'181****2233',history:[2,2,1.9,2,1.9,1.8,1.9,1.8,1.8]},
+  {id:'V017',plate:'豫GH3356',route:'连霍线',carrier:'豫冷快运',cargo:'冷冻水饺',cargoTag:'冷冻',tempMin:-18,tempMax:-15,currentTemp:-15.5,setTemp:-16,continuousRise:22,lastDoorOpen:'22:35',doorCount:3,refrigeratorStatus:'running',trafficStatus:'normal',location:'G30 开封段',driver:'韩震',phone:'150****7788',history:[-16,-16,-15.9,-15.8,-15.8,-15.7,-15.7,-15.6,-15.5]},
+  {id:'V018',plate:'皖JK2290',route:'京台线',carrier:'中冷物流',cargo:'胰岛素',cargoTag:'医药',tempMin:2,tempMax:8,currentTemp:9.2,setTemp:5,continuousRise:56,lastDoorOpen:'23:20',doorCount:5,refrigeratorStatus:'stopped',trafficStatus:'congested',location:'G3 蚌埠段',driver:'方达',phone:'139****5501',history:[5,5.5,6,6.5,7,7.5,8,8.5,9.2]},
+  {id:'V019',plate:'黑LM6654',route:'京哈线',carrier:'辽冷快运',cargo:'冷冻雪糕',cargoTag:'冷冻',tempMin:-25,tempMax:-20,currentTemp:-21.5,setTemp:-22,continuousRise:9,lastDoorOpen:'22:15',doorCount:1,refrigeratorStatus:'running',trafficStatus:'normal',location:'G1 哈尔滨段',driver:'丁航',phone:'188****3344',history:[-22,-22,-21.9,-21.9,-21.8,-21.7,-21.6,-21.6,-21.5]},
+  {id:'V020',plate:'云NP7789',route:'杭瑞线',carrier:'浙冷快运',cargo:'冷藏蔬菜',cargoTag:'冷藏',tempMin:0,tempMax:5,currentTemp:3.1,setTemp:2,continuousRise:0,lastDoorOpen:'20:50',doorCount:1,refrigeratorStatus:'running',trafficStatus:'normal',location:'G56 大理段',driver:'段凯',phone:'183****6677',history:[2,2.1,2.2,2.4,2.6,2.7,2.8,2.9,3.1]},
+]
+
+let dispositions = {}
+let currentSort = 'risk'
+let soundEnabled = true
+let lastWarningState = {}
+
+function getWarningLevel(v) {
+  const diff = v.currentTemp - v.tempMax
+  if (diff >= 0) return 'red'
+  if (diff >= -1) return 'orange'
+  if (diff >= -2) return 'yellow'
+  return 'normal'
+}
+
+function getRiskScore(v) {
+  const level = getWarningLevel(v)
+  const diff = v.currentTemp - v.tempMax
+  let score = 0
+  if (level === 'red') score = 1000 + diff * 100
+  else if (level === 'orange') score = 500 + (diff + 1) * 50
+  else if (level === 'yellow') score = 200 + (diff + 2) * 30
+  else score = diff
+  score += v.continuousRise * 0.5
+  if (v.refrigeratorStatus === 'stopped') score += 100
+  if (v.doorCount >= 5) score += 30
+  if (v.trafficStatus === 'congested') score += 20
+  return score
+}
+
+function getCauses(v) {
+  const causes = []
+  if (v.doorCount >= 5) causes.push({text:'频繁开门 ('+v.doorCount+'次)',level:'high'})
+  if (v.refrigeratorStatus === 'stopped') causes.push({text:'制冷机停机',level:'high'})
+  if (v.trafficStatus === 'congested') causes.push({text:'长时间堵车',level:'medium'})
+  if (v.continuousRise > 30) causes.push({text:'持续升温 '+v.continuousRise+'分钟',level:'medium'})
+  const diff = v.currentTemp - v.tempMax
+  if (diff >= -1 && diff < 0 && v.doorCount < 5 && v.refrigeratorStatus === 'running') {
+    causes.push({text:'温区设置偏移',level:'low'})
+  }
+  if (causes.length === 0) causes.push({text:'温度正常',level:'low'})
+  return causes
+}
+
+function formatTemp(t) {
+  return t.toFixed(1) + '°C'
+}
+
+function initFilters() {
+  const routes = [...new Set(VEHICLES.map(v => v.route))].sort()
+  const carriers = [...new Set(VEHICLES.map(v => v.carrier))].sort()
+  const cargos = [...new Set(VEHICLES.map(v => v.cargoTag))].sort()
+
+  const routeSelect = document.getElementById('filterRoute')
+  routes.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; routeSelect.appendChild(o) })
+
+  const carrierSelect = document.getElementById('filterCarrier')
+  carriers.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; carrierSelect.appendChild(o) })
+
+  const cargoSelect = document.getElementById('filterCargo')
+  cargos.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; cargoSelect.appendChild(o) })
+}
+
+function applyFilters() {
+  render()
+}
+
+function setSort(s) {
+  currentSort = s
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === s))
+  render()
+}
+
+function getFilteredVehicles() {
+  const route = document.getElementById('filterRoute').value
+  const carrier = document.getElementById('filterCarrier').value
+  const cargo = document.getElementById('filterCargo').value
+  const warning = document.getElementById('filterWarning').value
+
+  let list = VEHICLES.filter(v => {
+    if (route && v.route !== route) return false
+    if (carrier && v.carrier !== carrier) return false
+    if (cargo && v.cargoTag !== cargo) return false
+    if (warning && getWarningLevel(v) !== warning) return false
+    return true
+  })
+
+  list.forEach(v => v._riskScore = getRiskScore(v))
+  list.forEach(v => v._warningLevel = getWarningLevel(v))
+
+  if (currentSort === 'risk') {
+    list.sort((a, b) => b._riskScore - a._riskScore)
+  } else if (currentSort === 'temp') {
+    list.sort((a, b) => {
+      const da = a.currentTemp - a.tempMax
+      const db = b.currentTemp - b.tempMax
+      return db - da
+    })
+  } else if (currentSort === 'rise') {
+    list.sort((a, b) => b.continuousRise - a.continuousRise)
+  }
+
+  return list
+}
+
+function renderStats() {
+  const counts = {total:0,yellow:0,orange:0,red:0}
+  VEHICLES.forEach(v => {
+    counts.total++
+    const l = getWarningLevel(v)
+    if (l === 'yellow') counts.yellow++
+    else if (l === 'orange') counts.orange++
+    else if (l === 'red') counts.red++
+  })
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-icon total">🚛</div><div class="stat-info"><div class="stat-label">在途车辆</div><div class="stat-value">${counts.total}</div></div></div>
+    <div class="stat-card"><div class="stat-icon yellow">⚠️</div><div class="stat-info"><div class="stat-label">黄色预警</div><div class="stat-value yellow">${counts.yellow}</div></div></div>
+    <div class="stat-card"><div class="stat-icon orange">🔶</div><div class="stat-info"><div class="stat-label">橙色预警</div><div class="stat-value orange">${counts.orange}</div></div></div>
+    <div class="stat-card"><div class="stat-icon red">🔴</div><div class="stat-info"><div class="stat-label">红色预警</div><div class="stat-value red">${counts.red}</div></div></div>
+  `
+}
+
+function renderList() {
+  const list = getFilteredVehicles()
+  const container = document.getElementById('vehicleList')
+
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>没有匹配的车辆</p></div>'
+    return
+  }
+
+  container.innerHTML = list.map(v => {
+    const level = v._warningLevel
+    const causes = getCauses(v)
+    const disp = dispositions[v.id]
+    const isHandled = disp && disp.steps && disp.steps.every(s => s.status === 'completed')
+
+    return `
+      <div class="vehicle-row warning-${level}" onclick="openDisposition('${v.id}')">
+        <div class="risk-indicator"></div>
+        <div class="cell cell-plate">${v.plate}</div>
+        <div class="cell cell-route">${v.route}</div>
+        <div class="cell cell-carrier">${v.carrier}</div>
+        <div class="cell cell-cargo"><span class="cargo-tag">${v.cargoTag}</span>${v.cargo}</div>
+        <div class="cell cell-temp warning-${level}">
+          ${formatTemp(v.currentTemp)}
+          <div class="temp-range">${formatTemp(v.tempMin)} ~ ${formatTemp(v.tempMax)}</div>
+        </div>
+        <div class="cell cell-rise ${v.continuousRise > 20 ? 'high' : ''}">${v.continuousRise > 0 ? v.continuousRise + '分钟' : '-'}</div>
+        <div class="cell cell-door">${v.lastDoorOpen} (${v.doorCount}次)</div>
+        <div class="cell cell-cause">${causes.map(c => `<span class="cause-tag ${c.level === 'high' ? 'critical' : ''}">${c.text}</span>`).join('')}</div>
+        <div class="cell cell-action"><button class="action-btn ${isHandled ? 'handled' : ''}" onclick="event.stopPropagation();openDisposition('${v.id}')">${isHandled ? '已处置' : '处置'}</button></div>
+      </div>
+    `
+  }).join('')
+}
+
+function render() {
+  renderStats()
+  renderList()
+}
+
+function openDisposition(vehicleId) {
+  const v = VEHICLES.find(x => x.id === vehicleId)
+  if (!v) return
+  const level = getWarningLevel(v)
+  const causes = getCauses(v)
+  if (!dispositions[v.id]) {
+    dispositions[v.id] = {
+      vehicleId: v.id,
+      steps: [
+        {id:'contact',title:'联系司机',desc:'拨打司机电话确认车厢温度情况',status:'pending',time:null},
+        {id:'check',title:'检查制冷机组',desc:'要求司机检查制冷机组运行状态并重启',status:'pending',time:null},
+        {id:'adjust',title:'调整停车点',desc:'调整最近服务区停车点，缩短在途时间',status:'pending',time:null},
+        {id:'record',title:'记录处理结果',desc:'填写处置结果和后续跟进事项',status:'pending',time:null},
+      ],
+      result: '',
+      createdAt: new Date().toLocaleTimeString()
+    }
+  }
+  const disp = dispositions[v.id]
+
+  const levelLabels = {red:'🔴 红色预警',orange:'🟠 橙色预警',yellow:'🟡 黄色预警',normal:'🟢 温度正常'}
+  const tempClass = level === 'red' ? 'danger' : level === 'orange' ? 'warn' : level === 'yellow' ? 'caution' : ''
+
+  const modal = document.getElementById('modal')
+  modal.innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">
+        <span>${v.plate}</span>
+        <span style="font-size:.8rem;color:var(--text-secondary)">${v.route} · ${v.carrier}</span>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="vehicle-info">
+        <div class="info-block"><div class="label">当前厢温</div><div class="value ${tempClass}">${formatTemp(v.currentTemp)}</div></div>
+        <div class="info-block"><div class="label">设定温区</div><div class="value">${formatTemp(v.tempMin)} ~ ${formatTemp(v.tempMax)}</div></div>
+        <div class="info-block"><div class="label">预警等级</div><div class="value ${tempClass}">${levelLabels[level]}</div></div>
+        <div class="info-block"><div class="label">连续升温</div><div class="value">${v.continuousRise > 0 ? v.continuousRise + ' 分钟' : '无'}</div></div>
+        <div class="info-block"><div class="label">司机 / 电话</div><div class="value">${v.driver} ${v.phone}</div></div>
+        <div class="info-block"><div class="label">当前位置</div><div class="value">${v.location}</div></div>
+        <div class="info-block"><div class="label">制冷机组</div><div class="value ${v.refrigeratorStatus === 'stopped' ? 'danger' : ''}">${v.refrigeratorStatus === 'running' ? '✅ 运行中' : '⛔ 已停机'}</div></div>
+        <div class="info-block"><div class="label">交通状况</div><div class="value ${v.trafficStatus === 'congested' ? 'warn' : ''}">${v.trafficStatus === 'normal' ? '🟢 畅通' : '🟠 拥堵'}</div></div>
+      </div>
+
+      <div class="temp-chart">
+        <div class="temp-chart-label">近30分钟温度趋势</div>
+        <canvas id="tempCanvas"></canvas>
+      </div>
+
+      <div class="cause-analysis">
+        <h3>📋 回温原因分析</h3>
+        <div class="cause-list">
+          ${causes.map(c => `
+            <div class="cause-item">
+              <div class="cause-dot ${c.level}"></div>
+              <div class="cause-text">${c.text}</div>
+              <div class="cause-confidence">${c.level === 'high' ? '高可能' : c.level === 'medium' ? '中可能' : '低可能'}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="disposition-section">
+        <h3>🔧 处置流程</h3>
+        <div class="steps">
+          ${disp.steps.map((s, i) => {
+            const isActive = s.status === 'pending' && (i === 0 || disp.steps[i-1].status === 'completed')
+            const cls = s.status === 'completed' ? 'completed' : isActive ? 'active' : ''
+            return `
+              <div class="step ${cls}">
+                <div class="step-indicator">${s.status === 'completed' ? '✓' : (i+1)}</div>
+                <div class="step-content">
+                  <div class="step-title">${s.title}</div>
+                  <div class="step-desc">${s.desc}</div>
+                  ${s.time ? `<div class="step-meta">完成时间: ${s.time}</div>` : ''}
+                  <div class="step-actions">
+                    ${s.status === 'pending' && isActive ? `<button class="step-btn primary" onclick="completeStep('${v.id}',${i})">执行完成</button>` : ''}
+                    ${s.status === 'completed' && i < 3 ? '' : ''}
+                  </div>
+                </div>
+              </div>
+            `
+          }).join('')}
+        </div>
+
+        <div class="result-section">
+          <h4>📝 处置结果备注</h4>
+          <textarea class="result-textarea" placeholder="填写处理结果和后续跟进事项..." oninput="saveResult('${v.id}',this.value)">${disp.result}</textarea>
+        </div>
+      </div>
+    </div>
+  `
+
+  document.getElementById('modalOverlay').classList.add('show')
+  setTimeout(() => drawTempChart(v), 50)
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show')
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal()
+}
+
+function completeStep(vehicleId, stepIndex) {
+  const disp = dispositions[vehicleId]
+  if (!disp) return
+  disp.steps[stepIndex].status = 'completed'
+  disp.steps[stepIndex].time = new Date().toLocaleTimeString()
+  openDisposition(vehicleId)
+  const allDone = disp.steps.every(s => s.status === 'completed')
+  if (allDone) {
+    showToast(`${VEHICLES.find(v=>v.id===vehicleId).plate} 处置完成`, 'green')
+    renderList()
+  }
+}
+
+function saveResult(vehicleId, value) {
+  if (dispositions[vehicleId]) {
+    dispositions[vehicleId].result = value
+  }
+}
+
+function drawTempChart(v) {
+  const canvas = document.getElementById('tempCanvas')
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  const rect = canvas.parentElement.getBoundingClientRect()
+  canvas.width = rect.width * 2
+  canvas.height = rect.height * 2
+  ctx.scale(2, 2)
+  const w = rect.width
+  const h = rect.height
+
+  const data = v.history
+  const padding = {top: 25, right: 50, bottom: 15, left: 10}
+  const chartW = w - padding.left - padding.right
+  const chartH = h - padding.top - padding.bottom
+
+  const allVals = [...data, v.tempMax, v.tempMin]
+  const minVal = Math.min(...allVals) - 1
+  const maxVal = Math.max(...allVals) + 1
+
+  const toX = (i) => padding.left + (i / (data.length - 1)) * chartW
+  const toY = (val) => padding.top + (1 - (val - minVal) / (maxVal - minVal)) * chartH
+
+  ctx.fillStyle = 'rgba(15,22,35,.5)'
+  ctx.fillRect(0, 0, w, h)
+
+  ctx.strokeStyle = 'rgba(239,68,68,.3)'
+  ctx.lineWidth = 1
+  ctx.setLineDash([4, 4])
+  ctx.beginPath()
+  ctx.moveTo(padding.left, toY(v.tempMax))
+  ctx.lineTo(w - padding.right, toY(v.tempMax))
+  ctx.stroke()
+
+  ctx.strokeStyle = 'rgba(34,211,238,.2)'
+  ctx.beginPath()
+  ctx.moveTo(padding.left, toY(v.tempMin))
+  ctx.lineTo(w - padding.right, toY(v.tempMin))
+  ctx.stroke()
+  ctx.setLineDash([])
+
+  ctx.fillStyle = 'rgba(239,68,68,.5)'
+  ctx.font = '9px sans-serif'
+  ctx.fillText('上限 ' + v.tempMax + '°C', w - padding.right + 4, toY(v.tempMax) + 3)
+
+  const level = getWarningLevel(v)
+  const lineColor = level === 'red' ? '#ef4444' : level === 'orange' ? '#f97316' : level === 'yellow' ? '#fbbf24' : '#22d3ee'
+
+  const gradient = ctx.createLinearGradient(0, toY(Math.max(...data)), 0, toY(Math.min(...data)))
+  gradient.addColorStop(0, lineColor + '30')
+  gradient.addColorStop(1, lineColor + '05')
+
+  ctx.beginPath()
+  ctx.moveTo(toX(0), toY(data[0]))
+  for (let i = 1; i < data.length; i++) ctx.lineTo(toX(i), toY(data[i]))
+  ctx.lineTo(toX(data.length - 1), toY(data[data.length - 1]))
+  for (let i = data.length - 1; i >= 0; i--) ctx.lineTo(toX(i), toY(data[i]) + (i === data.length - 1 || i === 0 ? 0 : 0))
+  ctx.lineTo(toX(data.length - 1), padding.top + chartH)
+  ctx.lineTo(toX(0), padding.top + chartH)
+  ctx.closePath()
+  ctx.fillStyle = gradient
+  ctx.fill()
+
+  ctx.beginPath()
+  ctx.moveTo(toX(0), toY(data[0]))
+  for (let i = 1; i < data.length; i++) ctx.lineTo(toX(i), toY(data[i]))
+  ctx.strokeStyle = lineColor
+  ctx.lineWidth = 2
+  ctx.stroke()
+
+  const lastX = toX(data.length - 1)
+  const lastY = toY(data[data.length - 1])
+  ctx.beginPath()
+  ctx.arc(lastX, lastY, 4, 0, Math.PI * 2)
+  ctx.fillStyle = lineColor
+  ctx.fill()
+  ctx.strokeStyle = '#fff'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+}
+
+function showToast(msg, type) {
+  const container = document.getElementById('notifications')
+  const toast = document.createElement('div')
+  toast.className = 'toast ' + type
+  toast.textContent = msg
+  container.appendChild(toast)
+  setTimeout(() => toast.remove(), 4000)
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled
+  const btn = document.getElementById('soundToggle')
+  btn.textContent = soundEnabled ? '🔊 声音' : '🔇 静音'
+  btn.classList.toggle('on', soundEnabled)
+}
+
+function playAlert(level) {
+  if (!soundEnabled) return
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    gain.gain.value = 0.08
+    if (level === 'red') {
+      osc.frequency.value = 880
+      osc.type = 'square'
+    } else if (level === 'orange') {
+      osc.frequency.value = 660
+      osc.type = 'triangle'
+    } else {
+      osc.frequency.value = 440
+      osc.type = 'sine'
+    }
+    osc.start()
+    osc.stop(ctx.currentTime + 0.3)
+  } catch(e) {}
+}
+
+function simulateData() {
+  VEHICLES.forEach(v => {
+    const level = getWarningLevel(v)
+    const prevState = lastWarningState[v.id] || 'normal'
+
+    if (v.refrigeratorStatus === 'stopped' || v.trafficStatus === 'congested' || v.doorCount >= 5) {
+      const drift = (Math.random() * 0.3 - 0.05)
+      v.currentTemp = Math.round((v.currentTemp + drift) * 10) / 10
+      if (drift > 0) v.continuousRise += Math.floor(Math.random() * 3) + 1
+    } else if (level === 'yellow' || level === 'orange') {
+      const drift = (Math.random() * 0.2 - 0.08)
+      v.currentTemp = Math.round((v.currentTemp + drift) * 10) / 10
+      if (drift > 0) v.continuousRise += Math.floor(Math.random() * 2) + 1
+      else v.continuousRise = Math.max(0, v.continuousRise - 1)
+    } else {
+      const drift = (Math.random() * 0.4 - 0.2)
+      v.currentTemp = Math.round((v.currentTemp + drift) * 10) / 10
+      v.continuousRise = 0
+    }
+
+    v.currentTemp = Math.max(v.tempMin - 5, Math.min(v.tempMax + 5, v.currentTemp))
+    v.history.push(v.currentTemp)
+    if (v.history.length > 12) v.history.shift()
+
+    const newLevel = getWarningLevel(v)
+    if (newLevel !== prevState && (newLevel === 'red' || newLevel === 'orange')) {
+      showToast(`${v.plate} ${newLevel === 'red' ? '红色' : '橙色'}预警！`, newLevel)
+      playAlert(newLevel)
+    }
+    lastWarningState[v.id] = newLevel
+  })
+  render()
+}
+
+function updateClock() {
+  const now = new Date()
+  const str = now.getFullYear() + '-' +
+    String(now.getMonth()+1).padStart(2,'0') + '-' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0') + ':' +
+    String(now.getSeconds()).padStart(2,'0')
+  document.getElementById('clock').textContent = str
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal()
+})
+
+initFilters()
+VEHICLES.forEach(v => { lastWarningState[v.id] = getWarningLevel(v) })
+render()
+updateClock()
+setInterval(updateClock, 1000)
+setInterval(simulateData, 8000)
+</script>
+</body>
+</html>
