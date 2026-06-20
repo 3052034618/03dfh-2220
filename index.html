@@ -16,6 +16,7 @@
   --cyan:#22d3ee;--cyan-bg:rgba(34,211,238,.1);--cyan-border:rgba(34,211,238,.3);
   --green:#34d399;--green-bg:rgba(52,211,153,.1);
   --purple:#a78bfa;--purple-bg:rgba(167,139,250,.1);--purple-border:rgba(167,139,250,.3);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,.12);--blue-border:rgba(59,130,246,.35);
 }
 html{font-size:14px}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
@@ -39,10 +40,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .stat-icon.orange{background:var(--orange-bg);color:var(--orange)}
 .stat-icon.red{background:var(--red-bg);color:var(--red)}
 .stat-icon.overdue{background:var(--purple-bg);color:var(--purple)}
+.stat-icon.followup{background:var(--blue-bg);color:var(--blue)}
 .stat-info{display:flex;flex-direction:column}
 .stat-label{font-size:.75rem;color:var(--text-muted);margin-bottom:2px}
 .stat-value{font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums}
-.stat-value.yellow{color:var(--yellow)}.stat-value.orange{color:var(--orange)}.stat-value.red{color:var(--red)}.stat-value.purple{color:var(--purple)}
+.stat-value.yellow{color:var(--yellow)}.stat-value.orange{color:var(--orange)}.stat-value.red{color:var(--red)}.stat-value.purple{color:var(--purple)}.stat-value.blue{color:var(--blue)}
 
 .todo-section{padding:16px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border)}
 .todo-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -54,10 +56,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .todo-card.critical{border-color:var(--red-border);background:var(--red-bg)}
 .todo-card.warning{border-color:var(--orange-border);background:var(--orange-bg)}
 .todo-card.overdue{border-color:var(--purple-border);background:var(--purple-bg)}
+.todo-card.followup{border-color:var(--blue-border);background:var(--blue-bg)}
+.todo-card.inprogress{border-color:var(--orange-border)}
+.todo-card.attention{border-color:var(--yellow-border)}
 .todo-card .todo-flag{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
 .todo-card.critical .todo-flag{background:var(--red-bg);color:var(--red)}
 .todo-card.warning .todo-flag{background:var(--orange-bg);color:var(--orange)}
 .todo-card.overdue .todo-flag{background:var(--purple-bg);color:var(--purple)}
+.todo-card.followup .todo-flag{background:var(--blue-bg);color:var(--blue)}
 .todo-info{flex:1;min-width:0}
 .todo-plate{font-weight:700;font-size:.9rem;margin-bottom:2px}
 .todo-meta{font-size:.7rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -65,6 +71,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .todo-urgent.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
 .todo-urgent.orange{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
 .todo-urgent.purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.todo-urgent.blue{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+
+.shift-summary{padding:16px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border)}
+.summary-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.summary-title{font-size:.95rem;font-weight:700;color:var(--text-primary)}
+.summary-actions{display:flex;gap:8px}
+.summary-btn{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s}
+.summary-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.summary-btn.primary{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan)}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.summary-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px}
+.summary-card h4{font-size:.85rem;color:var(--text-primary);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.summary-card .count{font-size:1.5rem;font-weight:700;margin-bottom:8px}
+.summary-card .count.red{color:var(--red)}.summary-card .count.orange{color:var(--orange)}.summary-card .count.purple{color:var(--purple)}.summary-card .count.blue{color:var(--blue)}
+.summary-list{list-style:none;padding:0;max-height:120px;overflow-y:auto}
+.summary-list li{font-size:.75rem;color:var(--text-secondary);padding:3px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.summary-list li:last-child{border-bottom:none}
+.summary-list li .plate{color:var(--text-primary);font-weight:600}
+
+.followup-form{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:16px}
+.followup-form h4{font-size:.9rem;color:var(--text-primary);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.followup-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.followup-group{display:flex;flex-direction:column;gap:4px}
+.followup-group label{font-size:.75rem;color:var(--text-muted)}
+.followup-group input,.followup-group select,.followup-group textarea{background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);padding:8px 12px;font-size:.85rem;outline:none;font-family:inherit}
+.followup-group input:focus,.followup-group select:focus,.followup-group textarea:focus{border-color:var(--cyan)}
+.followup-group textarea{resize:vertical;min-height:60px}
+.followup-actions{display:flex;gap:8px;justify-content:flex-end}
+.followup-list{margin-top:16px}
+.followup-item{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px}
+.followup-item .followup-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.followup-item .followup-time{font-size:.75rem;color:var(--text-muted)}
+.followup-item .followup-content{font-size:.85rem;color:var(--text-secondary);margin-bottom:6px}
+.followup-item .followup-meta{font-size:.7rem;color:var(--text-muted);display:flex;gap:12px}
 
 .filter-bar{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap}
 .filter-group{display:flex;align-items:center;gap:6px}
@@ -299,6 +339,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
   <div class="todo-grid" id="todoGrid"></div>
 </div>
 
+<div class="shift-summary" id="shiftSummary">
+  <div class="summary-header">
+    <span class="summary-title">📋 交班摘要</span>
+    <div class="summary-actions">
+      <button class="summary-btn" onclick="refreshSummary()">🔄 刷新</button>
+      <button class="summary-btn primary" onclick="copyShiftSummary()">📋 一键复制交班</button>
+    </div>
+  </div>
+  <div class="summary-grid" id="summaryGrid"></div>
+</div>
+
 <div class="filter-bar">
   <div class="filter-group">
     <span class="filter-label">线路</span>
@@ -334,6 +385,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
       <option value="inprogress">处置中</option>
       <option value="done">已完成</option>
       <option value="overdue">已超时</option>
+      <option value="followup">待跟进</option>
     </select>
   </div>
   <div class="filter-divider"></div>
@@ -373,7 +425,8 @@ const STORAGE_KEYS = {
   DISPOSITIONS: 'coldchain_dispositions',
   WATCHLIST: 'coldchain_watchlist',
   EVENTS: 'coldchain_events',
-  CONTACTS: 'coldchain_contacts'
+  CONTACTS: 'coldchain_contacts',
+  FOLLOWUP: 'coldchain_followup'
 }
 
 const VEHICLES = [
@@ -406,10 +459,13 @@ const ALERT_SCRIPTS = {
   overdue: '【超时跟进提醒】\n司机师傅您好，这里是调度中心。\n关于 {plate} 的温度问题仍在跟进中，请问当前情况如何？制冷机组是否恢复正常？\n请及时反馈最新温度数据，谢谢配合。'
 }
 
+const OVERDUE_MINUTES = 30
+
 let dispositions = {}
 let watchList = new Set()
 let vehicleEvents = {}
 let contactRecords = {}
+let followUpPlans = {}
 let currentSort = 'risk'
 let soundEnabled = true
 let lastWarningState = {}
@@ -427,6 +483,7 @@ function saveToStorage() {
     localStorage.setItem(STORAGE_KEYS.WATCHLIST, JSON.stringify([...watchList]))
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(vehicleEvents))
     localStorage.setItem(STORAGE_KEYS.CONTACTS, JSON.stringify(contactRecords))
+    localStorage.setItem(STORAGE_KEYS.FOLLOWUP, JSON.stringify(followUpPlans))
   } catch(e) { console.error('Storage save failed:', e) }
 }
 
@@ -443,6 +500,9 @@ function loadFromStorage() {
 
     const contacts = localStorage.getItem(STORAGE_KEYS.CONTACTS)
     if (contacts) contactRecords = JSON.parse(contacts)
+    
+    const followup = localStorage.getItem(STORAGE_KEYS.FOLLOWUP)
+    if (followup) followUpPlans = JSON.parse(followup)
   } catch(e) { console.error('Storage load failed:', e) }
 }
 
@@ -471,17 +531,30 @@ function getRiskScore(v) {
   return score
 }
 
+function isOverdue(v) {
+  const disp = dispositions[v.id]
+  if (!disp || !disp.createdAt) return false
+  if (disp.steps.every(s => s.status === 'completed')) return false
+  const created = parseTimeStr(disp.createdAt)
+  const now = new Date()
+  const diffMin = (now - created) / 60000
+  return diffMin > OVERDUE_MINUTES
+}
+
+function isFollowUpDue(v) {
+  const plan = followUpPlans[v.id]
+  if (!plan || !plan.nextFollowUpTime) return false
+  const followUpTime = new Date(plan.nextFollowUpTime)
+  return new Date() >= followUpTime
+}
+
 function getDispositionStatus(v) {
+  if (isOverdue(v)) return 'overdue'
+  if (isFollowUpDue(v)) return 'followup'
   const disp = dispositions[v.id]
   if (!disp || !disp.steps) return 'pending'
   if (disp.steps.every(s => s.status === 'completed')) return 'done'
   if (disp.steps.some(s => s.status === 'completed')) return 'inprogress'
-  if (disp.createdAt) {
-    const created = parseTimeStr(disp.createdAt)
-    const now = new Date()
-    const diffMin = (now - created) / 60000
-    if (diffMin > 30) return 'overdue'
-  }
   return 'pending'
 }
 
@@ -602,16 +675,42 @@ function getTodoVehicles() {
   VEHICLES.forEach(v => {
     const level = getWarningLevel(v)
     const status = getDispositionStatus(v)
-    const isOverdue = status === 'overdue'
-    const isIncomplete = status === 'pending' || status === 'inprogress'
-
-    if (level === 'red' || level === 'orange' || isOverdue || (isIncomplete && level === 'yellow')) {
-      let priority = 0
-      let type = ''
-      if (level === 'red') { priority = 4; type = 'critical' }
-      else if (isOverdue) { priority = 3; type = 'overdue' }
-      else if (level === 'orange') { priority = 2; type = 'warning' }
-      else { priority = 1; type = 'warning' }
+    
+    let include = false
+    let priority = 0
+    let type = ''
+    
+    if (status === 'overdue') {
+      include = true
+      priority = 10
+      type = 'overdue'
+    } else if (status === 'followup') {
+      include = true
+      priority = 9
+      type = 'followup'
+    } else if (level === 'red') {
+      include = true
+      priority = 8
+      type = 'critical'
+    } else if (level === 'orange') {
+      include = true
+      priority = 7
+      type = 'warning'
+    } else if (status === 'inprogress') {
+      include = true
+      priority = 6
+      type = 'inprogress'
+    } else if (level === 'yellow' && status === 'pending') {
+      include = true
+      priority = 5
+      type = 'warning'
+    } else if (status === 'pending' && v.currentTemp > v.tempMax - 3) {
+      include = true
+      priority = 4
+      type = 'attention'
+    }
+    
+    if (include) {
       if (watchList.has(v.id)) priority += 0.5
       todos.push({ vehicle: v, priority, type, level, status })
     }
@@ -667,14 +766,16 @@ function getFilteredVehicles() {
 }
 
 function renderStats() {
-  const counts = {total:0,yellow:0,orange:0,red:0,overdue:0}
+  const counts = {total:0,yellow:0,orange:0,red:0,overdue:0,followup:0}
   VEHICLES.forEach(v => {
     counts.total++
     const l = getWarningLevel(v)
     if (l === 'yellow') counts.yellow++
     else if (l === 'orange') counts.orange++
     else if (l === 'red') counts.red++
-    if (getDispositionStatus(v) === 'overdue') counts.overdue++
+    const status = getDispositionStatus(v)
+    if (status === 'overdue') counts.overdue++
+    if (status === 'followup') counts.followup++
   })
   document.getElementById('statsBar').innerHTML = `
     <div class="stat-card"><div class="stat-icon total">🚛</div><div class="stat-info"><div class="stat-label">在途车辆</div><div class="stat-value">${counts.total}</div></div></div>
@@ -682,6 +783,7 @@ function renderStats() {
     <div class="stat-card"><div class="stat-icon orange">🔶</div><div class="stat-info"><div class="stat-label">橙色预警</div><div class="stat-value orange">${counts.orange}</div></div></div>
     <div class="stat-card"><div class="stat-icon yellow">⚠️</div><div class="stat-info"><div class="stat-label">黄色预警</div><div class="stat-value yellow">${counts.yellow}</div></div></div>
     <div class="stat-card"><div class="stat-icon overdue">⏰</div><div class="stat-info"><div class="stat-label">超时未跟进</div><div class="stat-value purple">${counts.overdue}</div></div></div>
+    <div class="stat-card"><div class="stat-icon followup">🔔</div><div class="stat-info"><div class="stat-label">待跟进</div><div class="stat-value blue">${counts.followup}</div></div></div>
   `
 }
 
@@ -699,11 +801,13 @@ function renderTodo() {
   grid.innerHTML = todos.slice(0, 8).map(t => {
     const v = t.vehicle
     const causes = getCauses(v)
-    const statusLabel = t.status === 'overdue' ? '已超时' : t.status === 'inprogress' ? '处置中' : t.level === 'red' ? '红色预警' : t.level === 'orange' ? '橙色预警' : '待处置'
-    const urgentClass = t.type === 'critical' ? 'red' : t.type === 'overdue' ? 'purple' : 'orange'
+    const statusLabels = {overdue:'已超时',followup:'待跟进',inprogress:'处置中'}
+    const statusLabel = statusLabels[t.status] || (t.level === 'red' ? '红色预警' : t.level === 'orange' ? '橙色预警' : '待处置')
+    const urgentClass = t.type === 'critical' ? 'red' : t.type === 'overdue' ? 'purple' : t.type === 'followup' ? 'blue' : 'orange'
+    const flagIcon = t.type === 'critical' ? '🔴' : t.type === 'overdue' ? '⏰' : t.type === 'followup' ? '🔔' : '🟠'
     return `
       <div class="todo-card ${t.type}" onclick="openDisposition('${v.id}')">
-        <div class="todo-flag">${t.type === 'critical' ? '🔴' : t.type === 'overdue' ? '⏰' : '🟠'}</div>
+        <div class="todo-flag">${flagIcon}</div>
         <div class="todo-info">
           <div class="todo-plate">${v.plate}${watchList.has(v.id) ? ' ⭐' : ''}</div>
           <div class="todo-meta">${v.route} · ${v.cargo}</div>
@@ -715,6 +819,154 @@ function renderTodo() {
   }).join('')
 }
 
+function getShiftSummaryData() {
+  const summary = {
+    red: [],
+    orange: [],
+    overdue: [],
+    noAnswer: [],
+    pendingReview: [],
+    byRoute: {},
+    byCarrier: {}
+  }
+  
+  VEHICLES.forEach(v => {
+    const level = getWarningLevel(v)
+    const status = getDispositionStatus(v)
+    const contacts = contactRecords[v.id] || []
+    const lastContact = contacts[contacts.length - 1]
+    
+    if (level === 'red') summary.red.push(v)
+    if (level === 'orange') summary.orange.push(v)
+    if (status === 'overdue') summary.overdue.push(v)
+    if (lastContact && lastContact.status === 'failed') summary.noAnswer.push(v)
+    if (status === 'followup') summary.pendingReview.push(v)
+    
+    if (!summary.byRoute[v.route]) summary.byRoute[v.route] = {red:0,orange:0,overdue:0,total:0}
+    summary.byRoute[v.route].total++
+    if (level === 'red') summary.byRoute[v.route].red++
+    if (level === 'orange') summary.byRoute[v.route].orange++
+    if (status === 'overdue') summary.byRoute[v.route].overdue++
+    
+    if (!summary.byCarrier[v.carrier]) summary.byCarrier[v.carrier] = {red:0,orange:0,overdue:0,total:0}
+    summary.byCarrier[v.carrier].total++
+    if (level === 'red') summary.byCarrier[v.carrier].red++
+    if (level === 'orange') summary.byCarrier[v.carrier].orange++
+    if (status === 'overdue') summary.byCarrier[v.carrier].overdue++
+  })
+  
+  return summary
+}
+
+function generateShiftSummaryText() {
+  const s = getShiftSummaryData()
+  const now = new Date().toLocaleString('zh-CN')
+  
+  let text = '【冷链调度交班报告】\n'
+  text += '生成时间：' + now + '\n\n'
+  text += '📊 总体情况：\n'
+  text += '  🔴 红色预警：' + s.red.length + ' 辆\n'
+  text += '  🟠 橙色预警：' + s.orange.length + ' 辆\n'
+  text += '  ⏰ 超时未跟进：' + s.overdue.length + ' 辆\n'
+  text += '  📞 已联系未接通：' + s.noAnswer.length + ' 辆\n'
+  text += '  🔔 待复核跟进：' + s.pendingReview.length + ' 辆\n\n'
+  
+  if (s.red.length > 0) {
+    text += '🔴 红色预警车辆：\n'
+    s.red.forEach(v => {
+      text += '  ' + v.plate + ' - ' + v.route + ' - ' + v.cargo + ' - 当前' + formatTemp(v.currentTemp) + '°C\n'
+    })
+    text += '\n'
+  }
+  
+  if (s.overdue.length > 0) {
+    text += '⏰ 超时未跟进车辆：\n'
+    s.overdue.forEach(v => {
+      text += '  ' + v.plate + ' - ' + v.route + ' - 已超过' + OVERDUE_MINUTES + '分钟未完成处置\n'
+    })
+    text += '\n'
+  }
+  
+  const routesWithIssues = Object.entries(s.byRoute).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0)
+  if (routesWithIssues.length > 0) {
+    text += '🛣️  按线路汇总：\n'
+    routesWithIssues.forEach(([route, data]) => {
+      text += '  ' + route + '：红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' / 共' + data.total + '辆\n'
+    })
+    text += '\n'
+  }
+  
+  const carriersWithIssues = Object.entries(s.byCarrier).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0)
+  if (carriersWithIssues.length > 0) {
+    text += '🚚 按承运商汇总：\n'
+    carriersWithIssues.forEach(([carrier, data]) => {
+      text += '  ' + carrier + '：红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' / 共' + data.total + '辆\n'
+    })
+    text += '\n'
+  }
+  
+  text += '💡 交班建议：请下一班优先跟进红色预警和超时车辆，及时联系未接通司机。'
+  
+  return text
+}
+
+function copyShiftSummary() {
+  const text = generateShiftSummaryText()
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('交班摘要已复制到剪贴板', 'green')
+  }).catch(() => {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    showToast('交班摘要已复制到剪贴板', 'green')
+  })
+}
+
+function refreshSummary() {
+  renderShiftSummary()
+  showToast('交班摘要已刷新', 'cyan')
+}
+
+function renderShiftSummary() {
+  const s = getShiftSummaryData()
+  const grid = document.getElementById('summaryGrid')
+  
+  const renderList = (arr, max=5) => arr.slice(0, max).map(v => `
+    <li><span class="plate">${v.plate}</span><span>${v.route}</span></li>
+  `).join('') + (arr.length > max ? `<li style="color:var(--text-muted);font-style:italic">...还有 ${arr.length - max} 辆</li>` : '')
+  
+  grid.innerHTML = `
+    <div class="summary-card">
+      <h4>🔴 红色预警</h4>
+      <div class="count red">${s.red.length}</div>
+      <ul class="summary-list">${s.red.length > 0 ? renderList(s.red) : '<li><span>暂无</span></li>'}</ul>
+    </div>
+    <div class="summary-card">
+      <h4>🟠 橙色预警</h4>
+      <div class="count orange">${s.orange.length}</div>
+      <ul class="summary-list">${s.orange.length > 0 ? renderList(s.orange) : '<li><span>暂无</span></li>'}</ul>
+    </div>
+    <div class="summary-card">
+      <h4>⏰ 超时未跟进</h4>
+      <div class="count purple">${s.overdue.length}</div>
+      <ul class="summary-list">${s.overdue.length > 0 ? renderList(s.overdue) : '<li><span>暂无</span></li>'}</ul>
+    </div>
+    <div class="summary-card">
+      <h4>📞 已联系未接通</h4>
+      <div class="count orange">${s.noAnswer.length}</div>
+      <ul class="summary-list">${s.noAnswer.length > 0 ? renderList(s.noAnswer) : '<li><span>暂无</span></li>'}</ul>
+    </div>
+    <div class="summary-card">
+      <h4>🔔 待复核跟进</h4>
+      <div class="count blue">${s.pendingReview.length}</div>
+      <ul class="summary-list">${s.pendingReview.length > 0 ? renderList(s.pendingReview) : '<li><span>暂无</span></li>'}</ul>
+    </div>
+  `
+}
+
 function renderList() {
   const list = getFilteredVehicles()
   const container = document.getElementById('vehicleList')
@@ -724,7 +976,7 @@ function renderList() {
     return
   }
 
-  const statusLabels = {pending:'未处置',inprogress:'处置中',done:'已完成',overdue:'已超时'}
+  const statusLabels = {pending:'未处置',inprogress:'处置中',done:'已完成',overdue:'已超时',followup:'待跟进'}
 
   container.innerHTML = list.map(v => {
     const level = v._warningLevel
@@ -761,6 +1013,7 @@ function renderList() {
 function render() {
   renderStats()
   renderTodo()
+  renderShiftSummary()
   renderList()
 }
 
@@ -896,6 +1149,100 @@ function generateTimeline(v) {
   return events
 }
 
+function getDefaultFollowUpTime() {
+  const now = new Date()
+  now.setMinutes(now.getMinutes() + 30)
+  const pad = (n) => n.toString().padStart(2, '0')
+  return now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes())
+}
+
+function saveFollowUp(vehicleId) {
+  const timeInput = document.getElementById('followUpTime')
+  const operatorSelect = document.getElementById('followUpOperator')
+  const conclusionInput = document.getElementById('followUpConclusion')
+  
+  if (!timeInput || !timeInput.value) {
+    showToast('请设置下次回访时间', 'red')
+    return
+  }
+  
+  const followUpTime = new Date(timeInput.value)
+  if (followUpTime <= new Date()) {
+    showToast('回访时间必须晚于当前时间', 'red')
+    return
+  }
+  
+  if (!followUpPlans[vehicleId]) {
+    followUpPlans[vehicleId] = { vehicleId, history: [] }
+  }
+  
+  const plan = {
+    id: Date.now(),
+    nextFollowUpTime: followUpTime.toISOString(),
+    operator: operatorSelect?.value || '未指定',
+    conclusion: conclusionInput?.value || '',
+    createdAt: new Date().toISOString(),
+    createdBy: operatorSelect?.value || '当前调度'
+  }
+  
+  followUpPlans[vehicleId].nextFollowUpTime = plan.nextFollowUpTime
+  followUpPlans[vehicleId].operator = plan.operator
+  followUpPlans[vehicleId].currentConclusion = plan.conclusion
+  followUpPlans[vehicleId].history.unshift(plan)
+  
+  const v = VEHICLES.find(x => x.id === vehicleId)
+  addEvent(vehicleId, 'disposition', '设置跟进计划：下次回访 ' + followUpTime.toLocaleString('zh-CN'), 'blue')
+  
+  saveToStorage()
+  showToast('跟进计划已保存，到点将在待办区提醒', 'green')
+  
+  if (v) openDisposition(vehicleId)
+  render()
+}
+
+function clearFollowUp(vehicleId) {
+  if (followUpPlans[vehicleId]) {
+    followUpPlans[vehicleId].nextFollowUpTime = null
+    followUpPlans[vehicleId].operator = null
+    followUpPlans[vehicleId].currentConclusion = null
+    addEvent(vehicleId, 'disposition', '清除跟进计划', 'yellow')
+    saveToStorage()
+    showToast('跟进计划已清除', 'yellow')
+    const v = VEHICLES.find(x => x.id === vehicleId)
+    if (v) openDisposition(vehicleId)
+    render()
+  }
+}
+
+function renderFollowUpHistory(vehicleId) {
+  const plan = followUpPlans[vehicleId]
+  if (!plan || !plan.history || plan.history.length === 0) {
+    return '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:.85rem">暂无跟进记录</div>'
+  }
+  
+  return plan.history.map(h => {
+    const time = new Date(h.createdAt).toLocaleString('zh-CN')
+    const nextTime = new Date(h.nextFollowUpTime).toLocaleString('zh-CN')
+    const isDue = new Date(h.nextFollowUpTime) <= new Date()
+    return `
+      <div class="followup-item">
+        <div class="followup-header">
+          <span class="followup-time">📅 ${time}</span>
+          <span class="tag ${isDue ? 'red' : 'blue'}">${isDue ? '已到期' : '待跟进'}</span>
+        </div>
+        <div class="followup-content">
+          下次回访：${nextTime}<br>
+          ${h.conclusion ? '复核结论：' + h.conclusion : ''}
+        </div>
+        <div class="followup-meta">
+          <span>👤 责任调度：${h.operator}</span>
+          <span>📝 记录人：${h.createdBy}</span>
+        </div>
+      </div>
+    `
+  }).join('')
+}
+
 function openDisposition(vehicleId) {
   const v = VEHICLES.find(x => x.id === vehicleId)
   if (!v) return
@@ -943,6 +1290,7 @@ function openDisposition(vehicleId) {
         <button class="tab-btn ${currentTab === 'disposition' ? 'active' : ''}" onclick="setTab('disposition')">🔧 处置</button>
         <button class="tab-btn ${currentTab === 'contact' ? 'active' : ''}" onclick="setTab('contact')">📞 联系记录</button>
         <button class="tab-btn ${currentTab === 'timeline' ? 'active' : ''}" onclick="setTab('timeline')">📋 事件时间线</button>
+        <button class="tab-btn ${currentTab === 'followup' ? 'active' : ''}" onclick="setTab('followup')">🔔 跟进计划</button>
       </div>
 
       <div class="vehicle-info">
@@ -1054,6 +1402,41 @@ function openDisposition(vehicleId) {
               </div>
             `).join('')}
           </div>
+        </div>
+      </div>
+
+      <div class="tab-panel ${currentTab === 'followup' ? 'active' : ''}">
+        <div class="followup-form">
+          <h4>📅 设置后续跟进计划</h4>
+          <div class="followup-row">
+            <div class="followup-group">
+              <label>下次回访时间</label>
+              <input type="datetime-local" id="followUpTime" value="${getDefaultFollowUpTime()}">
+            </div>
+            <div class="followup-group">
+              <label>责任调度员</label>
+              <select id="followUpOperator">
+                <option value="张调度">张调度</option>
+                <option value="李调度">李调度</option>
+                <option value="王调度">王调度</option>
+                <option value="刘调度">刘调度</option>
+                <option value="陈调度">陈调度</option>
+              </select>
+            </div>
+          </div>
+          <div class="followup-group">
+            <label>复核结论</label>
+            <textarea id="followUpConclusion" placeholder="填写当前处置效果评估、需注意事项、下一步跟进要点..."></textarea>
+          </div>
+          <div class="followup-actions">
+            <button class="summary-btn" onclick="clearFollowUp('${v.id}')">清除计划</button>
+            <button class="summary-btn primary" onclick="saveFollowUp('${v.id}')">💾 保存跟进计划</button>
+          </div>
+        </div>
+
+        <div class="followup-list">
+          <h4 style="font-size:.9rem;color:var(--text-primary);margin-bottom:12px">📜 历史跟进记录</h4>
+          ${renderFollowUpHistory(v.id)}
         </div>
       </div>
     </div>
