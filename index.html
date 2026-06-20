@@ -15,6 +15,7 @@
   --red:#ef4444;--red-bg:rgba(239,68,68,.12);--red-border:rgba(239,68,68,.45);
   --cyan:#22d3ee;--cyan-bg:rgba(34,211,238,.1);--cyan-border:rgba(34,211,238,.3);
   --green:#34d399;--green-bg:rgba(52,211,153,.1);
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,.1);--purple-border:rgba(167,139,250,.3);
 }
 html{font-size:14px}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden}
@@ -26,6 +27,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--cyan),#0891b2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
 .logo-text{font-size:1.2rem;font-weight:700;letter-spacing:.5px}
 .logo-text span{color:var(--cyan)}
+.shift-info{font-size:.75rem;color:var(--text-muted);background:var(--purple-bg);padding:3px 10px;border-radius:4px;border:1px solid var(--purple-border);color:var(--purple)}
 .clock{font-size:1.1rem;font-variant-numeric:tabular-nums;color:var(--text-secondary);font-weight:500}
 
 .stats-bar{display:flex;gap:8px;padding:12px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border)}
@@ -36,10 +38,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .stat-icon.yellow{background:var(--yellow-bg);color:var(--yellow)}
 .stat-icon.orange{background:var(--orange-bg);color:var(--orange)}
 .stat-icon.red{background:var(--red-bg);color:var(--red)}
+.stat-icon.overdue{background:var(--purple-bg);color:var(--purple)}
 .stat-info{display:flex;flex-direction:column}
 .stat-label{font-size:.75rem;color:var(--text-muted);margin-bottom:2px}
 .stat-value{font-size:1.4rem;font-weight:700;font-variant-numeric:tabular-nums}
-.stat-value.yellow{color:var(--yellow)}.stat-value.orange{color:var(--orange)}.stat-value.red{color:var(--red)}
+.stat-value.yellow{color:var(--yellow)}.stat-value.orange{color:var(--orange)}.stat-value.red{color:var(--red)}.stat-value.purple{color:var(--purple)}
+
+.todo-section{padding:16px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border)}
+.todo-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.todo-title{font-size:.95rem;font-weight:700;color:var(--text-primary)}
+.todo-count{font-size:.7rem;padding:2px 8px;border-radius:10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.todo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.todo-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:12px}
+.todo-card:hover{border-color:var(--border-light);background:var(--bg-card-hover);transform:translateY(-1px)}
+.todo-card.critical{border-color:var(--red-border);background:var(--red-bg)}
+.todo-card.warning{border-color:var(--orange-border);background:var(--orange-bg)}
+.todo-card.overdue{border-color:var(--purple-border);background:var(--purple-bg)}
+.todo-card .todo-flag{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.todo-card.critical .todo-flag{background:var(--red-bg);color:var(--red)}
+.todo-card.warning .todo-flag{background:var(--orange-bg);color:var(--orange)}
+.todo-card.overdue .todo-flag{background:var(--purple-bg);color:var(--purple)}
+.todo-info{flex:1;min-width:0}
+.todo-plate{font-weight:700;font-size:.9rem;margin-bottom:2px}
+.todo-meta{font-size:.7rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.todo-urgent{font-size:.65rem;padding:1px 6px;border-radius:4px;margin-top:4px;display:inline-block}
+.todo-urgent.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.todo-urgent.orange{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
+.todo-urgent.purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
 
 .filter-bar{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap}
 .filter-group{display:flex;align-items:center;gap:6px}
@@ -47,15 +72,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .filter-select{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);padding:6px 12px;font-size:.85rem;outline:none;cursor:pointer;min-width:120px}
 .filter-select:focus{border-color:var(--cyan)}
 .filter-select option{background:var(--bg-card);color:var(--text-primary)}
+.filter-toggle{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);padding:6px 12px;font-size:.8rem;cursor:pointer;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.filter-toggle:hover{border-color:var(--border-light)}
+.filter-toggle.active{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan)}
 .filter-divider{width:1px;height:24px;background:var(--border);margin:0 4px}
 .sort-btns{display:flex;gap:4px;margin-left:auto}
 .sort-btn{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);padding:6px 14px;font-size:.8rem;cursor:pointer;transition:all .2s;white-space:nowrap}
 .sort-btn:hover{border-color:var(--border-light);color:var(--text-primary)}
 .sort-btn.active{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan)}
 
-.vehicle-list{padding:12px 24px 24px;display:flex;flex-direction:column;gap:8px;min-height:calc(100vh - 200px)}
-.vehicle-row{display:grid;grid-template-columns:8px 90px 1.2fr .8fr .8fr 1fr 1fr 1fr 1fr 100px;align-items:center;gap:0;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0;cursor:pointer;transition:all .2s;overflow:hidden;position:relative}
+.list-header{display:grid;grid-template-columns:8px 32px 90px 1.2fr .8fr .8fr 1fr 1fr 1fr 1fr 1fr 100px;gap:0;padding:4px 0;margin-bottom:2px}
+.list-header .hcell{padding:6px 12px;font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.watch-cell{display:flex;align-items:center;justify-content:center}
+
+.vehicle-list{padding:12px 24px 24px;display:flex;flex-direction:column;gap:8px;min-height:calc(100vh - 300px)}
+.vehicle-row{display:grid;grid-template-columns:8px 32px 90px 1.2fr .8fr .8fr 1fr 1fr 1fr 1fr 1fr 100px;align-items:center;gap:0;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0;cursor:pointer;transition:all .2s;overflow:hidden;position:relative}
 .vehicle-row:hover{border-color:var(--border-light);background:var(--bg-card-hover);transform:translateX(2px)}
+.vehicle-row.watched{border-color:var(--purple-border)}
+.vehicle-row.watched::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--cyan))}
 .vehicle-row.warning-yellow{border-left:none}
 .vehicle-row.warning-yellow .risk-indicator{background:var(--yellow)}
 .vehicle-row.warning-orange{border-left:none}
@@ -67,6 +101,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 @keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
 
 .risk-indicator{width:8px;align-self:stretch;min-height:56px}
+.watch-btn{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--text-muted);font-size:.75rem;transition:all .15s}
+.watch-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.watch-btn.active{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
 .cell{padding:10px 12px;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cell-plate{font-weight:700;font-size:.95rem;color:var(--text-primary)}
 .cell-route{color:var(--text-secondary)}
@@ -82,22 +119,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .cell-cause{display:flex;flex-wrap:wrap;gap:4px}
 .cause-tag{font-size:.7rem;padding:2px 7px;border-radius:4px;border:1px solid var(--border);color:var(--text-secondary);background:var(--bg-secondary)}
 .cause-tag.critical{border-color:var(--red-border);color:var(--red);background:var(--red-bg)}
-.cell-action{text-align:center}
-.action-btn{background:var(--cyan-bg);border:1px solid var(--cyan-border);color:var(--cyan);border-radius:6px;padding:5px 14px;font-size:.78rem;cursor:pointer;transition:all .2s;font-weight:500}
+.cell-status{font-size:.78rem}
+.status-tag{padding:2px 8px;border-radius:4px;font-size:.72rem;display:inline-block}
+.status-tag.pending{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-border)}
+.status-tag.inprogress{background:var(--cyan-bg);color:var(--cyan);border:1px solid var(--cyan-border)}
+.status-tag.done{background:var(--green-bg);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.status-tag.overdue{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.cell-action{text-align:center;display:flex;gap:4px;justify-content:center}
+.action-btn{background:var(--cyan-bg);border:1px solid var(--cyan-border);color:var(--cyan);border-radius:6px;padding:5px 12px;font-size:.78rem;cursor:pointer;transition:all .2s;font-weight:500}
 .action-btn:hover{background:rgba(34,211,238,.2)}
 .action-btn.handled{background:var(--green-bg);border-color:rgba(52,211,153,.3);color:var(--green)}
 
-.list-header{display:grid;grid-template-columns:8px 90px 1.2fr .8fr .8fr 1fr 1fr 1fr 1fr 100px;gap:0;padding:4px 0;margin-bottom:2px}
-.list-header .hcell{padding:6px 12px;font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .modal-overlay.show{display:flex}
-.modal{background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;width:720px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.modal{background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;width:820px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.5)}
 .modal-header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg-secondary);z-index:1}
 .modal-title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:10px}
+.modal-watch{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);padding:4px 10px;font-size:.75rem;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .2s}
+.modal-watch:hover{border-color:var(--cyan);color:var(--cyan)}
+.modal-watch.active{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
 .modal-close{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);width:32px;height:32px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .modal-close:hover{border-color:var(--red);color:var(--red)}
 .modal-body{padding:24px}
+.modal-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.tab-btn{background:transparent;border:none;color:var(--text-muted);padding:10px 16px;font-size:.85rem;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab-btn:hover{color:var(--text-primary)}
+.tab-btn.active{color:var(--cyan);border-bottom-color:var(--cyan)}
 
 .vehicle-info{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
 .info-block{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px 16px}
@@ -129,7 +176,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .step-title{font-weight:600;font-size:.9rem;margin-bottom:4px}
 .step-desc{font-size:.78rem;color:var(--text-muted);margin-bottom:8px}
 .step-meta{font-size:.75rem;color:var(--text-secondary)}
-.step-actions{display:flex;gap:6px;margin-top:8px}
+.step-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .step-btn{padding:5px 14px;border-radius:6px;font-size:.78rem;cursor:pointer;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);transition:all .15s}
 .step-btn:hover{border-color:var(--cyan-border);color:var(--cyan)}
 .step-btn.primary{background:var(--cyan-bg);border-color:var(--cyan-border);color:var(--cyan)}
@@ -150,21 +197,78 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .empty-state p{font-size:.95rem}
 
 @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.vehicle-row{animation:slideIn .3s ease-out}
+.vehicle-row,.todo-card,.timeline-item,.contact-record{animation:slideIn .3s ease-out}
 
 .notification{position:fixed;top:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px}
 .toast{padding:12px 20px;border-radius:8px;font-size:.85rem;animation:slideIn .3s ease-out;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
-.toast.red{background:var(--red);color:#fff}.toast.orange{background:var(--orange);color:#fff}.toast.yellow{background:var(--yellow);color:#000}.toast.green{background:var(--green);color:#000}
+.toast.red{background:var(--red);color:#fff}.toast.orange{background:var(--orange);color:#fff}.toast.yellow{background:var(--yellow);color:#000}.toast.green{background:var(--green);color:#000}.toast.purple{background:var(--purple);color:#fff}
 
 .sound-toggle{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text-secondary);padding:6px 12px;font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .2s}
 .sound-toggle:hover{border-color:var(--border-light)}
 .sound-toggle.on{color:var(--cyan);border-color:var(--cyan-border)}
 
-@media(max-width:1200px){
-  .vehicle-row{grid-template-columns:8px 80px 1fr .8fr 1fr 1fr 100px}
+.timeline-section{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px}
+.timeline-section h3{font-size:.9rem;margin-bottom:16px;color:var(--text-secondary)}
+.timeline{position:relative;padding-left:28px}
+.timeline::before{content:'';position:absolute;left:9px;top:4px;bottom:4px;width:2px;background:var(--border)}
+.timeline-item{position:relative;padding-bottom:14px}
+.timeline-item::before{content:'';position:absolute;left:-23px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid var(--border);background:var(--bg-secondary)}
+.timeline-item.temp::before{border-color:var(--cyan);background:var(--cyan-bg)}
+.timeline-item.door::before{border-color:var(--yellow);background:var(--yellow-bg)}
+.timeline-item.warning::before{border-color:var(--red);background:var(--red-bg)}
+.timeline-item.disposition::before{border-color:var(--green);background:var(--green-bg)}
+.timeline-item.contact::before{border-color:var(--purple);background:var(--purple-bg)}
+.timeline-item:last-child{padding-bottom:0}
+.timeline-time{font-size:.7rem;color:var(--text-muted);margin-bottom:2px;font-variant-numeric:tabular-nums}
+.timeline-content{font-size:.85rem;color:var(--text-primary)}
+.timeline-content .tag{font-size:.68rem;padding:1px 6px;border-radius:3px;margin-left:6px}
+.timeline-content .tag.red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.timeline-content .tag.orange{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border)}
+.timeline-content .tag.yellow{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-border)}
+.timeline-content .tag.green{background:var(--green-bg);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.timeline-content .tag.purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.timeline-content .note{font-size:.78rem;color:var(--text-muted);margin-top:4px}
+
+.contact-section{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px}
+.contact-section h3{font-size:.9rem;margin-bottom:12px;color:var(--text-secondary)}
+.contact-actions{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.contact-btn{padding:6px 14px;border-radius:6px;font-size:.8rem;cursor:pointer;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);transition:all .15s;display:flex;align-items:center;gap:5px}
+.contact-btn:hover{border-color:var(--cyan-border);color:var(--cyan)}
+.contact-btn.success{border-color:rgba(52,211,153,.3);color:var(--green);background:rgba(52,211,153,.1)}
+.contact-btn.failed{border-color:var(--red-border);color:var(--red);background:var(--red-bg)}
+.contact-records{display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;margin-bottom:14px}
+.contact-record{padding:10px 12px;background:var(--bg-secondary);border-radius:6px;border:1px solid var(--border)}
+.contact-record-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.contact-record-status{font-size:.72rem;padding:1px 6px;border-radius:3px}
+.contact-record-status.success{background:rgba(52,211,153,.1);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.contact-record-status.failed{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.contact-record-time{font-size:.7rem;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.contact-record-note{font-size:.8rem;color:var(--text-secondary);margin-top:4px}
+.script-box{background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:12px;margin-top:10px}
+.script-box-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.script-box-header h4{font-size:.78rem;color:var(--text-secondary);font-weight:500}
+.copy-btn{padding:3px 10px;border-radius:4px;font-size:.72rem;cursor:pointer;border:1px solid var(--cyan-border);background:var(--cyan-bg);color:var(--cyan);transition:all .15s}
+.copy-btn:hover{background:rgba(34,211,238,.2)}
+.script-text{font-size:.8rem;color:var(--text-primary);line-height:1.6;white-space:pre-wrap}
+
+.contact-input{display:flex;gap:8px;margin-top:10px}
+.contact-input input{flex:1;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);padding:7px 12px;font-size:.8rem;outline:none}
+.contact-input input:focus{border-color:var(--cyan)}
+
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+@media(max-width:1400px){
+  .vehicle-row{grid-template-columns:8px 32px 90px 1fr .8fr 1fr 1fr 1fr 1fr 100px}
+  .vehicle-row .cell-carrier,.vehicle-row .cell-cause{display:none}
+  .list-header{grid-template-columns:8px 32px 90px 1fr .8fr 1fr 1fr 1fr 1fr 100px}
+  .list-header .hcell:nth-child(5),.list-header .hcell:nth-child(9){display:none}
+}
+@media(max-width:1100px){
+  .vehicle-row{grid-template-columns:8px 32px 80px 1fr .8fr 1fr 1fr 100px}
   .vehicle-row .cell-carrier,.vehicle-row .cell-cause,.vehicle-row .cell-door{display:none}
-  .list-header{grid-template-columns:8px 80px 1fr .8fr 1fr 1fr 100px}
-  .list-header .hcell:nth-child(4),.list-header .hcell:nth-child(8),.list-header .hcell:nth-child(9){display:none}
+  .list-header{grid-template-columns:8px 32px 80px 1fr .8fr 1fr 1fr 100px}
+  .list-header .hcell:nth-child(5),.list-header .hcell:nth-child(8),.list-header .hcell:nth-child(9){display:none}
 }
 </style>
 </head>
@@ -176,7 +280,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
       <div class="logo-icon">❄</div>
       <div class="logo-text"><span>冷链</span>车队调度看板</div>
     </div>
-    <div style="font-size:.75rem;color:var(--text-muted);background:var(--bg-card);padding:3px 10px;border-radius:4px;border:1px solid var(--border)">回温风险监控中心</div>
+    <div class="shift-info" id="shiftInfo">🌙 夜班监控中</div>
   </div>
   <div style="display:flex;align-items:center;gap:12px">
     <button class="sound-toggle on" id="soundToggle" onclick="toggleSound()">🔊 声音</button>
@@ -185,6 +289,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 </div>
 
 <div class="stats-bar" id="statsBar"></div>
+
+<div class="todo-section" id="todoSection">
+  <div class="todo-header">
+    <span class="todo-title">🔥 夜班待办</span>
+    <span class="todo-count" id="todoCount">0</span>
+    <span style="font-size:.7rem;color:var(--text-muted)">按优先级自动排序</span>
+  </div>
+  <div class="todo-grid" id="todoGrid"></div>
+</div>
 
 <div class="filter-bar">
   <div class="filter-group">
@@ -212,6 +325,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
       <option value="normal">🟢 正常</option>
     </select>
   </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">处置</span>
+    <select class="filter-select" id="filterDisposition" onchange="applyFilters()">
+      <option value="">全部状态</option>
+      <option value="pending">未处置</option>
+      <option value="inprogress">处置中</option>
+      <option value="done">已完成</option>
+      <option value="overdue">已超时</option>
+    </select>
+  </div>
+  <div class="filter-divider"></div>
+  <button class="filter-toggle" id="filterWatch" onclick="toggleWatchFilter()">⭐ 只看关注</button>
   <div class="sort-btns">
     <button class="sort-btn active" data-sort="risk" onclick="setSort('risk')">风险优先</button>
     <button class="sort-btn" data-sort="temp" onclick="setSort('temp')">温度排序</button>
@@ -221,6 +347,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 
 <div class="list-header">
   <div class="hcell"></div>
+  <div class="hcell watch-cell">⭐</div>
   <div class="hcell">车牌号</div>
   <div class="hcell">线路</div>
   <div class="hcell">承运商</div>
@@ -229,6 +356,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
   <div class="hcell">连续升温</div>
   <div class="hcell">最近开门</div>
   <div class="hcell">可能原因</div>
+  <div class="hcell">处置状态</div>
   <div class="hcell">操作</div>
 </div>
 
@@ -241,6 +369,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 </div>
 
 <script>
+const STORAGE_KEYS = {
+  DISPOSITIONS: 'coldchain_dispositions',
+  WATCHLIST: 'coldchain_watchlist',
+  EVENTS: 'coldchain_events',
+  CONTACTS: 'coldchain_contacts'
+}
+
 const VEHICLES = [
   {id:'V001',plate:'京AF8821',route:'京沪线',carrier:'顺冷达',cargo:'冷冻肉类',cargoTag:'冷冻',tempMin:-20,tempMax:-15,currentTemp:-15.2,setTemp:-18,continuousRise:38,lastDoorOpen:'22:41',doorCount:6,refrigeratorStatus:'running',trafficStatus:'normal',location:'G2 天津段',driver:'张伟',phone:'138****5521',history:[-18,-17.8,-17.5,-17.1,-16.7,-16.3,-15.9,-15.5,-15.2]},
   {id:'V002',plate:'京BK3347',route:'京广线',carrier:'中冷物流',cargo:'冰淇淋',cargoTag:'冷冻',tempMin:-25,tempMax:-20,currentTemp:-20.8,setTemp:-23,continuousRise:0,lastDoorOpen:'21:15',doorCount:1,refrigeratorStatus:'running',trafficStatus:'normal',location:'G4 郑州段',driver:'李强',phone:'139****8834',history:[-23,-23.1,-23,-22.9,-23,-22.8,-23,-22.9,-20.8]},
@@ -264,10 +399,54 @@ const VEHICLES = [
   {id:'V020',plate:'云NP7789',route:'杭瑞线',carrier:'浙冷快运',cargo:'冷藏蔬菜',cargoTag:'冷藏',tempMin:0,tempMax:5,currentTemp:3.1,setTemp:2,continuousRise:0,lastDoorOpen:'20:50',doorCount:1,refrigeratorStatus:'running',trafficStatus:'normal',location:'G56 大理段',driver:'段凯',phone:'183****6677',history:[2,2.1,2.2,2.4,2.6,2.7,2.8,2.9,3.1]},
 ]
 
+const ALERT_SCRIPTS = {
+  red: '【冷链预警提醒】\n司机师傅您好，这里是调度中心。\n您驾驶的车辆 {plate} 当前厢温 {temp}，已超过设定上限 {max}°C，存在货品变质风险。\n请立即：\n1. 检查制冷机组是否正常运行\n2. 确认车厢门是否关好\n3. 如需就近服务区检修，请告知，我们帮您协调\n请保持电话畅通，我们会持续关注温度变化。',
+  orange: '【冷链预警提醒】\n司机师傅您好，这里是调度中心。\n您驾驶的车辆 {plate} 当前厢温 {temp}，已接近设定上限 {max}°C，请注意监控。\n建议：\n1. 检查车厢是否有异常开门\n2. 观察制冷机组工作状态\n3. 如温度继续上升请及时反馈\n如有问题请随时联系调度中心。',
+  yellow: '【冷链温度提醒】\n司机师傅您好，这里是调度中心。\n您驾驶的车辆 {plate} 当前厢温 {temp}，已接近警戒值，请注意观察。\n如发现温度异常上升，请及时检查制冷设备并反馈。',
+  overdue: '【超时跟进提醒】\n司机师傅您好，这里是调度中心。\n关于 {plate} 的温度问题仍在跟进中，请问当前情况如何？制冷机组是否恢复正常？\n请及时反馈最新温度数据，谢谢配合。'
+}
+
 let dispositions = {}
+let watchList = new Set()
+let vehicleEvents = {}
+let contactRecords = {}
 let currentSort = 'risk'
 let soundEnabled = true
 let lastWarningState = {}
+let watchFilter = false
+let currentTab = 'disposition'
+let lastSavedTime = 0
+let pendingContactNote = ''
+
+function saveToStorage() {
+  const now = Date.now()
+  if (now - lastSavedTime < 100) return
+  lastSavedTime = now
+  try {
+    localStorage.setItem(STORAGE_KEYS.DISPOSITIONS, JSON.stringify(dispositions))
+    localStorage.setItem(STORAGE_KEYS.WATCHLIST, JSON.stringify([...watchList]))
+    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(vehicleEvents))
+    localStorage.setItem(STORAGE_KEYS.CONTACTS, JSON.stringify(contactRecords))
+  } catch(e) { console.error('Storage save failed:', e) }
+}
+
+function loadFromStorage() {
+  try {
+    const disp = localStorage.getItem(STORAGE_KEYS.DISPOSITIONS)
+    if (disp) dispositions = JSON.parse(disp)
+
+    const watch = localStorage.getItem(STORAGE_KEYS.WATCHLIST)
+    if (watch) watchList = new Set(JSON.parse(watch))
+
+    const events = localStorage.getItem(STORAGE_KEYS.EVENTS)
+    if (events) vehicleEvents = JSON.parse(events)
+
+    const contacts = localStorage.getItem(STORAGE_KEYS.CONTACTS)
+    if (contacts) contactRecords = JSON.parse(contacts)
+  } catch(e) { console.error('Storage load failed:', e) }
+}
+
+setInterval(saveToStorage, 500)
 
 function getWarningLevel(v) {
   const diff = v.currentTemp - v.tempMax
@@ -292,6 +471,20 @@ function getRiskScore(v) {
   return score
 }
 
+function getDispositionStatus(v) {
+  const disp = dispositions[v.id]
+  if (!disp || !disp.steps) return 'pending'
+  if (disp.steps.every(s => s.status === 'completed')) return 'done'
+  if (disp.steps.some(s => s.status === 'completed')) return 'inprogress'
+  if (disp.createdAt) {
+    const created = parseTimeStr(disp.createdAt)
+    const now = new Date()
+    const diffMin = (now - created) / 60000
+    if (diffMin > 30) return 'overdue'
+  }
+  return 'pending'
+}
+
 function getCauses(v) {
   const causes = []
   if (v.doorCount >= 5) causes.push({text:'频繁开门 ('+v.doorCount+'次)',level:'high'})
@@ -308,6 +501,75 @@ function getCauses(v) {
 
 function formatTemp(t) {
   return t.toFixed(1) + '°C'
+}
+
+function parseTimeStr(str) {
+  if (str.length <= 5) {
+    const [h, m] = str.split(':')
+    const d = new Date()
+    d.setHours(parseInt(h), parseInt(m), 0, 0)
+    return d
+  }
+  return new Date(str)
+}
+
+function addEvent(vehicleId, type, content, tag = null, note = null) {
+  if (!vehicleEvents[vehicleId]) vehicleEvents[vehicleId] = []
+  const event = {
+    id: Date.now() + Math.random(),
+    time: new Date().toLocaleTimeString(),
+    timestamp: Date.now(),
+    type,
+    content,
+    tag,
+    note
+  }
+  vehicleEvents[vehicleId].unshift(event)
+  if (vehicleEvents[vehicleId].length > 50) vehicleEvents[vehicleId] = vehicleEvents[vehicleId].slice(0, 50)
+  saveToStorage()
+}
+
+function addContactRecord(vehicleId, status, note) {
+  if (!contactRecords[vehicleId]) contactRecords[vehicleId] = []
+  const record = {
+    id: Date.now() + Math.random(),
+    time: new Date().toLocaleTimeString(),
+    timestamp: Date.now(),
+    status,
+    note
+  }
+  contactRecords[vehicleId].unshift(record)
+  saveToStorage()
+  return record
+}
+
+function toggleWatch(vehicleId, e) {
+  if (e) e.stopPropagation()
+  if (watchList.has(vehicleId)) {
+    watchList.delete(vehicleId)
+    showToast(`已取消关注 ${VEHICLES.find(v=>v.id===vehicleId).plate}`, 'yellow')
+  } else {
+    watchList.add(vehicleId)
+    showToast(`已关注 ${VEHICLES.find(v=>v.id===vehicleId).plate}`, 'purple')
+    addEvent(vehicleId, 'disposition', '调度员已关注此车辆', 'purple')
+  }
+  saveToStorage()
+  render()
+  if (document.getElementById('modalOverlay').classList.contains('show')) {
+    const v = VEHICLES.find(v => v.id === vehicleId)
+    if (v) {
+      const modal = document.getElementById('modal')
+      if (modal.innerHTML.includes(v.plate)) {
+        openDisposition(vehicleId)
+      }
+    }
+  }
+}
+
+function toggleWatchFilter() {
+  watchFilter = !watchFilter
+  document.getElementById('filterWatch').classList.toggle('active', watchFilter)
+  applyFilters()
 }
 
 function initFilters() {
@@ -335,53 +597,122 @@ function setSort(s) {
   render()
 }
 
+function getTodoVehicles() {
+  const todos = []
+  VEHICLES.forEach(v => {
+    const level = getWarningLevel(v)
+    const status = getDispositionStatus(v)
+    const isOverdue = status === 'overdue'
+    const isIncomplete = status === 'pending' || status === 'inprogress'
+
+    if (level === 'red' || level === 'orange' || isOverdue || (isIncomplete && level === 'yellow')) {
+      let priority = 0
+      let type = ''
+      if (level === 'red') { priority = 4; type = 'critical' }
+      else if (isOverdue) { priority = 3; type = 'overdue' }
+      else if (level === 'orange') { priority = 2; type = 'warning' }
+      else { priority = 1; type = 'warning' }
+      if (watchList.has(v.id)) priority += 0.5
+      todos.push({ vehicle: v, priority, type, level, status })
+    }
+  })
+  todos.sort((a, b) => b.priority - a.priority)
+  return todos
+}
+
 function getFilteredVehicles() {
   const route = document.getElementById('filterRoute').value
   const carrier = document.getElementById('filterCarrier').value
   const cargo = document.getElementById('filterCargo').value
   const warning = document.getElementById('filterWarning').value
+  const disposition = document.getElementById('filterDisposition').value
 
   let list = VEHICLES.filter(v => {
     if (route && v.route !== route) return false
     if (carrier && v.carrier !== carrier) return false
     if (cargo && v.cargoTag !== cargo) return false
     if (warning && getWarningLevel(v) !== warning) return false
+    if (disposition && getDispositionStatus(v) !== disposition) return false
+    if (watchFilter && !watchList.has(v.id)) return false
     return true
   })
 
   list.forEach(v => v._riskScore = getRiskScore(v))
   list.forEach(v => v._warningLevel = getWarningLevel(v))
+  list.forEach(v => v._isWatched = watchList.has(v.id))
 
   if (currentSort === 'risk') {
-    list.sort((a, b) => b._riskScore - a._riskScore)
+    list.sort((a, b) => {
+      if (a._isWatched && !b._isWatched) return -1
+      if (!a._isWatched && b._isWatched) return 1
+      return b._riskScore - a._riskScore
+    })
   } else if (currentSort === 'temp') {
     list.sort((a, b) => {
+      if (a._isWatched && !b._isWatched) return -1
+      if (!a._isWatched && b._isWatched) return 1
       const da = a.currentTemp - a.tempMax
       const db = b.currentTemp - b.tempMax
       return db - da
     })
   } else if (currentSort === 'rise') {
-    list.sort((a, b) => b.continuousRise - a.continuousRise)
+    list.sort((a, b) => {
+      if (a._isWatched && !b._isWatched) return -1
+      if (!a._isWatched && b._isWatched) return 1
+      return b.continuousRise - a.continuousRise
+    })
   }
 
   return list
 }
 
 function renderStats() {
-  const counts = {total:0,yellow:0,orange:0,red:0}
+  const counts = {total:0,yellow:0,orange:0,red:0,overdue:0}
   VEHICLES.forEach(v => {
     counts.total++
     const l = getWarningLevel(v)
     if (l === 'yellow') counts.yellow++
     else if (l === 'orange') counts.orange++
     else if (l === 'red') counts.red++
+    if (getDispositionStatus(v) === 'overdue') counts.overdue++
   })
   document.getElementById('statsBar').innerHTML = `
     <div class="stat-card"><div class="stat-icon total">🚛</div><div class="stat-info"><div class="stat-label">在途车辆</div><div class="stat-value">${counts.total}</div></div></div>
-    <div class="stat-card"><div class="stat-icon yellow">⚠️</div><div class="stat-info"><div class="stat-label">黄色预警</div><div class="stat-value yellow">${counts.yellow}</div></div></div>
-    <div class="stat-card"><div class="stat-icon orange">🔶</div><div class="stat-info"><div class="stat-label">橙色预警</div><div class="stat-value orange">${counts.orange}</div></div></div>
     <div class="stat-card"><div class="stat-icon red">🔴</div><div class="stat-info"><div class="stat-label">红色预警</div><div class="stat-value red">${counts.red}</div></div></div>
+    <div class="stat-card"><div class="stat-icon orange">🔶</div><div class="stat-info"><div class="stat-label">橙色预警</div><div class="stat-value orange">${counts.orange}</div></div></div>
+    <div class="stat-card"><div class="stat-icon yellow">⚠️</div><div class="stat-info"><div class="stat-label">黄色预警</div><div class="stat-value yellow">${counts.yellow}</div></div></div>
+    <div class="stat-card"><div class="stat-icon overdue">⏰</div><div class="stat-info"><div class="stat-label">超时未跟进</div><div class="stat-value purple">${counts.overdue}</div></div></div>
   `
+}
+
+function renderTodo() {
+  const todos = getTodoVehicles()
+  const grid = document.getElementById('todoGrid')
+  const count = document.getElementById('todoCount')
+  count.textContent = todos.length
+
+  if (todos.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text-muted);font-size:.85rem">✅ 暂无待处理事项</div>'
+    return
+  }
+
+  grid.innerHTML = todos.slice(0, 8).map(t => {
+    const v = t.vehicle
+    const causes = getCauses(v)
+    const statusLabel = t.status === 'overdue' ? '已超时' : t.status === 'inprogress' ? '处置中' : t.level === 'red' ? '红色预警' : t.level === 'orange' ? '橙色预警' : '待处置'
+    const urgentClass = t.type === 'critical' ? 'red' : t.type === 'overdue' ? 'purple' : 'orange'
+    return `
+      <div class="todo-card ${t.type}" onclick="openDisposition('${v.id}')">
+        <div class="todo-flag">${t.type === 'critical' ? '🔴' : t.type === 'overdue' ? '⏰' : '🟠'}</div>
+        <div class="todo-info">
+          <div class="todo-plate">${v.plate}${watchList.has(v.id) ? ' ⭐' : ''}</div>
+          <div class="todo-meta">${v.route} · ${v.cargo}</div>
+          <div class="todo-meta" style="color:var(--text-primary);font-weight:600;font-variant-numeric:tabular-nums">${formatTemp(v.currentTemp)} / 上限 ${formatTemp(v.tempMax)}</div>
+          <span class="todo-urgent ${urgentClass}">${statusLabel} · ${causes[0]?.text || ''}</span>
+        </div>
+      </div>
+    `
+  }).join('')
 }
 
 function renderList() {
@@ -393,15 +724,22 @@ function renderList() {
     return
   }
 
+  const statusLabels = {pending:'未处置',inprogress:'处置中',done:'已完成',overdue:'已超时'}
+
   container.innerHTML = list.map(v => {
     const level = v._warningLevel
     const causes = getCauses(v)
     const disp = dispositions[v.id]
     const isHandled = disp && disp.steps && disp.steps.every(s => s.status === 'completed')
+    const dispStatus = getDispositionStatus(v)
+    const watched = watchList.has(v.id)
 
     return `
-      <div class="vehicle-row warning-${level}" onclick="openDisposition('${v.id}')">
+      <div class="vehicle-row warning-${level} ${watched ? 'watched' : ''}" onclick="openDisposition('${v.id}')">
         <div class="risk-indicator"></div>
+        <div class="cell watch-cell">
+          <button class="watch-btn ${watched ? 'active' : ''}" onclick="toggleWatch('${v.id}', event)">${watched ? '⭐' : '☆'}</button>
+        </div>
         <div class="cell cell-plate">${v.plate}</div>
         <div class="cell cell-route">${v.route}</div>
         <div class="cell cell-carrier">${v.carrier}</div>
@@ -413,6 +751,7 @@ function renderList() {
         <div class="cell cell-rise ${v.continuousRise > 20 ? 'high' : ''}">${v.continuousRise > 0 ? v.continuousRise + '分钟' : '-'}</div>
         <div class="cell cell-door">${v.lastDoorOpen} (${v.doorCount}次)</div>
         <div class="cell cell-cause">${causes.map(c => `<span class="cause-tag ${c.level === 'high' ? 'critical' : ''}">${c.text}</span>`).join('')}</div>
+        <div class="cell cell-status"><span class="status-tag ${dispStatus}">${statusLabels[dispStatus]}</span></div>
         <div class="cell cell-action"><button class="action-btn ${isHandled ? 'handled' : ''}" onclick="event.stopPropagation();openDisposition('${v.id}')">${isHandled ? '已处置' : '处置'}</button></div>
       </div>
     `
@@ -421,7 +760,140 @@ function renderList() {
 
 function render() {
   renderStats()
+  renderTodo()
   renderList()
+}
+
+function setTab(tabName) {
+  currentTab = tabName
+  const currentVehicleId = document.querySelector('.modal-title span')?.textContent?.trim()
+  if (currentVehicleId) {
+    const v = VEHICLES.find(v => v.plate === currentVehicleId)
+    if (v) openDisposition(v.id)
+  }
+}
+
+function getCurrentScript(v) {
+  const level = getWarningLevel(v)
+  const status = getDispositionStatus(v)
+  let scriptKey = level
+  if (status === 'overdue') scriptKey = 'overdue'
+  const template = ALERT_SCRIPTS[scriptKey] || ALERT_SCRIPTS.yellow
+  return template.replace(/\{plate\}/g, v.plate)
+    .replace(/\{temp\}/g, formatTemp(v.currentTemp))
+    .replace(/\{max\}/g, formatTemp(v.tempMax))
+}
+
+function copyScript(vehicleId) {
+  const v = VEHICLES.find(x => x.id === vehicleId)
+  if (!v) return
+  const script = getCurrentScript(v)
+  navigator.clipboard.writeText(script).then(() => {
+    showToast('提醒话术已复制到剪贴板', 'green')
+  }).catch(() => {
+    const ta = document.createElement('textarea')
+    ta.value = script
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    showToast('提醒话术已复制到剪贴板', 'green')
+  })
+}
+
+function addContact(vehicleId, status) {
+  const v = VEHICLES.find(x => x.id === vehicleId)
+  if (!v) return
+  const noteInput = document.getElementById('contactNote')
+  const note = noteInput?.value?.trim() || pendingContactNote
+  pendingContactNote = ''
+  const record = addContactRecord(vehicleId, status, note)
+  const statusText = status === 'success' ? '已接通' : '未接通'
+  addEvent(vehicleId, 'contact', `${statusText}电话`, 'purple', note || null)
+  openDisposition(vehicleId)
+  showToast(`${v.plate} 联系记录已保存`, 'green')
+}
+
+function updateContactNote(e) {
+  pendingContactNote = e.target.value
+}
+
+function generateTimeline(v) {
+  const events = []
+  const level = getWarningLevel(v)
+
+  if (vehicleEvents[v.id]) {
+    vehicleEvents[v.id].forEach(e => events.push({...e}))
+  }
+
+  if (v.history.length >= 2) {
+    const diff = v.history[v.history.length-1] - v.history[0]
+    if (Math.abs(diff) >= 1) {
+      const direction = diff > 0 ? '上升' : '下降'
+      events.push({
+        id: 'temp-auto-' + Date.now(),
+        time: new Date().toLocaleTimeString(),
+        timestamp: Date.now() - 1000,
+        type: 'temp',
+        content: `厢温${direction} ${Math.abs(diff).toFixed(1)}°C，当前 ${formatTemp(v.currentTemp)}`,
+        tag: diff > 0 ? (level === 'red' ? 'red' : level === 'orange' ? 'orange' : 'yellow') : 'green'
+      })
+    }
+  }
+
+  if (v.doorCount > 0) {
+    events.push({
+      id: 'door-auto-' + Date.now(),
+      time: v.lastDoorOpen,
+      timestamp: Date.now() - 2000,
+      type: 'door',
+      content: `累计开门 ${v.doorCount} 次`,
+      tag: v.doorCount >= 5 ? 'orange' : 'yellow'
+    })
+  }
+
+  if (level === 'red' || level === 'orange' || level === 'yellow') {
+    events.push({
+      id: 'warn-auto-' + Date.now(),
+      time: new Date().toLocaleTimeString(),
+      timestamp: Date.now() - 500,
+      type: 'warning',
+      content: `触发${level === 'red' ? '红色' : level === 'orange' ? '橙色' : '黄色'}预警`,
+      tag: level
+    })
+  }
+
+  const disp = dispositions[v.id]
+  if (disp && disp.steps) {
+    disp.steps.forEach((s, i) => {
+      if (s.status === 'completed') {
+        events.push({
+          id: 'disp-' + i,
+          time: s.time,
+          timestamp: new Date().setHours(...s.time.split(':').map(Number)) || Date.now() - 3000,
+          type: 'disposition',
+          content: `处置步骤 ${i+1}: ${s.title} 已完成`,
+          tag: 'green'
+        })
+      }
+    })
+  }
+
+  const contacts = contactRecords[v.id] || []
+  contacts.forEach(c => {
+    events.push({
+      id: 'contact-' + c.id,
+      time: c.time,
+      timestamp: c.timestamp,
+      type: 'contact',
+      content: `${c.status === 'success' ? '已接通' : '未接通'}司机电话`,
+      tag: 'purple',
+      note: c.note
+    })
+  })
+
+  events.sort((a, b) => b.timestamp - a.timestamp)
+  return events
 }
 
 function openDisposition(vehicleId) {
@@ -441,11 +913,18 @@ function openDisposition(vehicleId) {
       result: '',
       createdAt: new Date().toLocaleTimeString()
     }
+    saveToStorage()
+    addEvent(v.id, 'disposition', '开始处置流程', 'green')
   }
   const disp = dispositions[v.id]
 
   const levelLabels = {red:'🔴 红色预警',orange:'🟠 橙色预警',yellow:'🟡 黄色预警',normal:'🟢 温度正常'}
   const tempClass = level === 'red' ? 'danger' : level === 'orange' ? 'warn' : level === 'yellow' ? 'caution' : ''
+  const watched = watchList.has(v.id)
+
+  const timelineEvents = generateTimeline(v)
+  const contacts = contactRecords[v.id] || []
+  const script = getCurrentScript(v)
 
   const modal = document.getElementById('modal')
   modal.innerHTML = `
@@ -454,9 +933,18 @@ function openDisposition(vehicleId) {
         <span>${v.plate}</span>
         <span style="font-size:.8rem;color:var(--text-secondary)">${v.route} · ${v.carrier}</span>
       </div>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="modal-watch ${watched ? 'active' : ''}" onclick="toggleWatch('${v.id}', event)">${watched ? '⭐ 已关注' : '☆ 关注'}</button>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
     </div>
     <div class="modal-body">
+      <div class="modal-tabs">
+        <button class="tab-btn ${currentTab === 'disposition' ? 'active' : ''}" onclick="setTab('disposition')">🔧 处置</button>
+        <button class="tab-btn ${currentTab === 'contact' ? 'active' : ''}" onclick="setTab('contact')">📞 联系记录</button>
+        <button class="tab-btn ${currentTab === 'timeline' ? 'active' : ''}" onclick="setTab('timeline')">📋 事件时间线</button>
+      </div>
+
       <div class="vehicle-info">
         <div class="info-block"><div class="label">当前厢温</div><div class="value ${tempClass}">${formatTemp(v.currentTemp)}</div></div>
         <div class="info-block"><div class="label">设定温区</div><div class="value">${formatTemp(v.tempMin)} ~ ${formatTemp(v.tempMax)}</div></div>
@@ -473,45 +961,99 @@ function openDisposition(vehicleId) {
         <canvas id="tempCanvas"></canvas>
       </div>
 
-      <div class="cause-analysis">
-        <h3>📋 回温原因分析</h3>
-        <div class="cause-list">
-          ${causes.map(c => `
-            <div class="cause-item">
-              <div class="cause-dot ${c.level}"></div>
-              <div class="cause-text">${c.text}</div>
-              <div class="cause-confidence">${c.level === 'high' ? '高可能' : c.level === 'medium' ? '中可能' : '低可能'}</div>
-            </div>
-          `).join('')}
+      <div class="tab-panel ${currentTab === 'disposition' ? 'active' : ''}">
+        <div class="cause-analysis">
+          <h3>📋 回温原因分析</h3>
+          <div class="cause-list">
+            ${causes.map(c => `
+              <div class="cause-item">
+                <div class="cause-dot ${c.level}"></div>
+                <div class="cause-text">${c.text}</div>
+                <div class="cause-confidence">${c.level === 'high' ? '高可能' : c.level === 'medium' ? '中可能' : '低可能'}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="disposition-section">
+          <h3>🔧 处置流程</h3>
+          <div class="steps">
+            ${disp.steps.map((s, i) => {
+              const isActive = s.status === 'pending' && (i === 0 || disp.steps[i-1].status === 'completed')
+              const cls = s.status === 'completed' ? 'completed' : isActive ? 'active' : ''
+              return `
+                <div class="step ${cls}">
+                  <div class="step-indicator">${s.status === 'completed' ? '✓' : (i+1)}</div>
+                  <div class="step-content">
+                    <div class="step-title">${s.title}</div>
+                    <div class="step-desc">${s.desc}</div>
+                    ${s.time ? `<div class="step-meta">完成时间: ${s.time}</div>` : ''}
+                    <div class="step-actions">
+                      ${s.status === 'pending' && isActive ? `<button class="step-btn primary" onclick="completeStep('${v.id}',${i})">执行完成</button>` : ''}
+                      ${s.status === 'completed' && i < 3 ? '' : ''}
+                    </div>
+                  </div>
+                </div>
+              `
+            }).join('')}
+          </div>
+
+          <div class="result-section">
+            <h4>📝 处置结果备注</h4>
+            <textarea class="result-textarea" placeholder="填写处理结果和后续跟进事项..." oninput="saveResult('${v.id}',this.value)">${disp.result}</textarea>
+          </div>
         </div>
       </div>
 
-      <div class="disposition-section">
-        <h3>🔧 处置流程</h3>
-        <div class="steps">
-          ${disp.steps.map((s, i) => {
-            const isActive = s.status === 'pending' && (i === 0 || disp.steps[i-1].status === 'completed')
-            const cls = s.status === 'completed' ? 'completed' : isActive ? 'active' : ''
-            return `
-              <div class="step ${cls}">
-                <div class="step-indicator">${s.status === 'completed' ? '✓' : (i+1)}</div>
-                <div class="step-content">
-                  <div class="step-title">${s.title}</div>
-                  <div class="step-desc">${s.desc}</div>
-                  ${s.time ? `<div class="step-meta">完成时间: ${s.time}</div>` : ''}
-                  <div class="step-actions">
-                    ${s.status === 'pending' && isActive ? `<button class="step-btn primary" onclick="completeStep('${v.id}',${i})">执行完成</button>` : ''}
-                    ${s.status === 'completed' && i < 3 ? '' : ''}
-                  </div>
+      <div class="tab-panel ${currentTab === 'contact' ? 'active' : ''}">
+        <div class="contact-section">
+          <h3>📞 联系记录</h3>
+          <div class="contact-actions">
+            <button class="contact-btn success" onclick="addContact('${v.id}','success')">✅ 已接通</button>
+            <button class="contact-btn failed" onclick="addContact('${v.id}','failed')">❌ 未接通</button>
+          </div>
+          <div class="contact-input">
+            <input type="text" id="contactNote" placeholder="记录司机反馈内容..." oninput="updateContactNote(event)" value="${pendingContactNote}">
+          </div>
+
+          <div class="contact-records">
+            ${contacts.length === 0 ? `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:.85rem">暂无联系记录</div>` : ''}
+            ${contacts.map(c => `
+              <div class="contact-record">
+                <div class="contact-record-header">
+                  <span class="contact-record-status ${c.status}">${c.status === 'success' ? '✅ 已接通' : '❌ 未接通'}</span>
+                  <span class="contact-record-time">${c.time}</span>
+                </div>
+                ${c.note ? `<div class="contact-record-note">${c.note}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="script-box">
+            <div class="script-box-header">
+              <h4>📝 快速提醒话术</h4>
+              <button class="copy-btn" onclick="copyScript('${v.id}')">📋 复制话术</button>
+            </div>
+            <div class="script-text">${script}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel ${currentTab === 'timeline' ? 'active' : ''}">
+        <div class="timeline-section">
+          <h3>📋 事件时间线（交接班快速复盘）</h3>
+          <div class="timeline">
+            ${timelineEvents.slice(0, 20).map(e => `
+              <div class="timeline-item ${e.type}">
+                <div class="timeline-time">${e.time}</div>
+                <div class="timeline-content">
+                  ${e.content}
+                  ${e.tag ? `<span class="tag ${e.tag}">${e.tag === 'red' ? '高风险' : e.tag === 'orange' ? '中风险' : e.tag === 'yellow' ? '低风险' : e.tag === 'green' ? '正常' : '关注'}</span>` : ''}
+                  ${e.note ? `<div class="note">备注: ${e.note}</div>` : ''}
                 </div>
               </div>
-            `
-          }).join('')}
-        </div>
-
-        <div class="result-section">
-          <h4>📝 处置结果备注</h4>
-          <textarea class="result-textarea" placeholder="填写处理结果和后续跟进事项..." oninput="saveResult('${v.id}',this.value)">${disp.result}</textarea>
+            `).join('')}
+          </div>
         </div>
       </div>
     </div>
@@ -523,6 +1065,8 @@ function openDisposition(vehicleId) {
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('show')
+  pendingContactNote = ''
+  currentTab = 'disposition'
 }
 
 function closeModalOutside(e) {
@@ -534,17 +1078,22 @@ function completeStep(vehicleId, stepIndex) {
   if (!disp) return
   disp.steps[stepIndex].status = 'completed'
   disp.steps[stepIndex].time = new Date().toLocaleTimeString()
+  const v = VEHICLES.find(v=>v.id===vehicleId)
+  addEvent(vehicleId, 'disposition', `处置步骤 ${stepIndex+1}: ${disp.steps[stepIndex].title} 已完成`, 'green')
   openDisposition(vehicleId)
   const allDone = disp.steps.every(s => s.status === 'completed')
   if (allDone) {
-    showToast(`${VEHICLES.find(v=>v.id===vehicleId).plate} 处置完成`, 'green')
+    showToast(`${v.plate} 处置完成`, 'green')
+    addEvent(vehicleId, 'disposition', '全部处置步骤已完成', 'green')
     renderList()
   }
+  saveToStorage()
 }
 
 function saveResult(vehicleId, value) {
   if (dispositions[vehicleId]) {
     dispositions[vehicleId].result = value
+    saveToStorage()
   }
 }
 
@@ -603,8 +1152,6 @@ function drawTempChart(v) {
   ctx.beginPath()
   ctx.moveTo(toX(0), toY(data[0]))
   for (let i = 1; i < data.length; i++) ctx.lineTo(toX(i), toY(data[i]))
-  ctx.lineTo(toX(data.length - 1), toY(data[data.length - 1]))
-  for (let i = data.length - 1; i >= 0; i--) ctx.lineTo(toX(i), toY(data[i]) + (i === data.length - 1 || i === 0 ? 0 : 0))
   ctx.lineTo(toX(data.length - 1), padding.top + chartH)
   ctx.lineTo(toX(0), padding.top + chartH)
   ctx.closePath()
@@ -676,8 +1223,14 @@ function simulateData() {
 
     if (v.refrigeratorStatus === 'stopped' || v.trafficStatus === 'congested' || v.doorCount >= 5) {
       const drift = (Math.random() * 0.3 - 0.05)
+      const oldTemp = v.currentTemp
       v.currentTemp = Math.round((v.currentTemp + drift) * 10) / 10
-      if (drift > 0) v.continuousRise += Math.floor(Math.random() * 3) + 1
+      if (drift > 0) {
+        v.continuousRise += Math.floor(Math.random() * 3) + 1
+        if (Math.abs(v.currentTemp - oldTemp) >= 0.2) {
+          addEvent(v.id, 'temp', `厢温上升至 ${formatTemp(v.currentTemp)}`, level === 'red' ? 'red' : level === 'orange' ? 'orange' : 'yellow')
+        }
+      }
     } else if (level === 'yellow' || level === 'orange') {
       const drift = (Math.random() * 0.2 - 0.08)
       v.currentTemp = Math.round((v.currentTemp + drift) * 10) / 10
@@ -697,6 +1250,7 @@ function simulateData() {
     if (newLevel !== prevState && (newLevel === 'red' || newLevel === 'orange')) {
       showToast(`${v.plate} ${newLevel === 'red' ? '红色' : '橙色'}预警！`, newLevel)
       playAlert(newLevel)
+      addEvent(v.id, 'warning', `升级为${newLevel === 'red' ? '红色' : '橙色'}预警`, newLevel)
     }
     lastWarningState[v.id] = newLevel
   })
@@ -712,12 +1266,17 @@ function updateClock() {
     String(now.getMinutes()).padStart(2,'0') + ':' +
     String(now.getSeconds()).padStart(2,'0')
   document.getElementById('clock').textContent = str
+
+  const hr = now.getHours()
+  const isNight = hr >= 22 || hr < 6
+  document.getElementById('shiftInfo').textContent = isNight ? '🌙 夜班监控中' : '☀️ 白班监控中'
 }
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal()
 })
 
+loadFromStorage()
 initFilters()
 VEHICLES.forEach(v => { lastWarningState[v.id] = getWarningLevel(v) })
 render()
