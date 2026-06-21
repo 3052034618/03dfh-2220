@@ -57,6 +57,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .todo-card.warning{border-color:var(--orange-border);background:var(--orange-bg)}
 .todo-card.overdue{border-color:var(--purple-border);background:var(--purple-bg)}
 .todo-card.followup{border-color:var(--blue-border);background:var(--blue-bg)}
+.todo-card.relapse{border-color:var(--orange-border);background:var(--orange-bg);box-shadow:0 0 0 1px rgba(249,115,22,.2) inset}
+.todo-card.relapse.followup{border-color:var(--red-border);background:var(--red-bg)}
 .todo-card.inprogress{border-color:var(--orange-border)}
 .todo-card.attention{border-color:var(--yellow-border)}
 .todo-card .todo-flag{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
@@ -64,6 +66,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .todo-card.warning .todo-flag{background:var(--orange-bg);color:var(--orange)}
 .todo-card.overdue .todo-flag{background:var(--purple-bg);color:var(--purple)}
 .todo-card.followup .todo-flag{background:var(--blue-bg);color:var(--blue)}
+.todo-card.relapse .todo-flag{background:var(--orange-bg);color:var(--orange)}
 .todo-info{flex:1;min-width:0}
 .todo-plate{font-weight:700;font-size:.9rem;margin-bottom:2px}
 .todo-meta{font-size:.7rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -140,6 +143,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .vehicle-row:hover{border-color:var(--border-light);background:var(--bg-card-hover);transform:translateX(2px)}
 .vehicle-row.watched{border-color:var(--purple-border)}
 .vehicle-row.watched::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--cyan))}
+.vehicle-row.relapse{background:rgba(249,115,22,0.04)}
 .vehicle-row.warning-yellow{border-left:none}
 .vehicle-row.warning-yellow .risk-indicator{background:var(--yellow)}
 .vehicle-row.warning-orange{border-left:none}
@@ -401,6 +405,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
   </div>
   <div class="filter-divider"></div>
   <button class="filter-toggle" id="filterWatch" onclick="toggleWatchFilter()">⭐ 只看关注</button>
+  <button class="filter-toggle" id="filterRelapse" onclick="toggleRelapseFilter()">♻️ 只看复发</button>
   <div class="sort-btns">
     <button class="sort-btn active" data-sort="risk" onclick="setSort('risk')">风险优先</button>
     <button class="sort-btn" data-sort="temp" onclick="setSort('temp')">温度排序</button>
@@ -437,7 +442,9 @@ const STORAGE_KEYS = {
   WATCHLIST: 'coldchain_watchlist',
   EVENTS: 'coldchain_events',
   CONTACTS: 'coldchain_contacts',
-  FOLLOWUP: 'coldchain_followup'
+  FOLLOWUP: 'coldchain_followup',
+  DISPHISTORY: 'coldchain_disp_history',
+  RELAPSE: 'coldchain_relapse'
 }
 
 const VEHICLES = [
@@ -477,6 +484,9 @@ let watchList = new Set()
 let vehicleEvents = {}
 let contactRecords = {}
 let followUpPlans = {}
+let dispositionHistory = {}
+let relapseWarned = {}
+let relapseFilter = false
 let currentSort = 'risk'
 let soundEnabled = true
 let lastWarningState = {}
@@ -495,6 +505,8 @@ function saveToStorage() {
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(vehicleEvents))
     localStorage.setItem(STORAGE_KEYS.CONTACTS, JSON.stringify(contactRecords))
     localStorage.setItem(STORAGE_KEYS.FOLLOWUP, JSON.stringify(followUpPlans))
+    localStorage.setItem(STORAGE_KEYS.DISPHISTORY, JSON.stringify(dispositionHistory))
+    localStorage.setItem(STORAGE_KEYS.RELAPSE, JSON.stringify(relapseWarned))
   } catch(e) { console.error('Storage save failed:', e) }
 }
 
@@ -514,6 +526,12 @@ function loadFromStorage() {
     
     const followup = localStorage.getItem(STORAGE_KEYS.FOLLOWUP)
     if (followup) followUpPlans = JSON.parse(followup)
+    
+    const disphist = localStorage.getItem(STORAGE_KEYS.DISPHISTORY)
+    if (disphist) dispositionHistory = JSON.parse(disphist)
+    
+    const relapse = localStorage.getItem(STORAGE_KEYS.RELAPSE)
+    if (relapse) relapseWarned = JSON.parse(relapse)
   } catch(e) { console.error('Storage load failed:', e) }
 }
 
@@ -573,6 +591,118 @@ function getDispositionStatus(v) {
   if (disp.steps.every(s => s.status === 'completed')) return 'done'
   if (disp.steps.some(s => s.status === 'completed')) return 'inprogress'
   return 'pending'
+}
+
+function isRelapse(v) {
+  const disp = dispositions[v.id]
+  if (!disp || !disp.steps) return false
+  if (!disp.steps.every(s => s.status === 'completed')) return false
+  const level = getWarningLevel(v)
+  return level === 'red' || level === 'orange'
+}
+
+function checkAndMarkRelapse(v) {
+  if (!isRelapse(v)) return false
+  const vid = v.id
+  const level = getWarningLevel(v)
+  const key = vid + '_' + level
+  if (!relapseWarned[key]) {
+    relapseWarned[key] = Date.now()
+    addEvent(vid, 'warning', '⚠️ 复发预警：处置完成后温度再次升至' + (level === 'red' ? '红色' : '橙色') + '预警', level)
+    saveToStorage()
+  }
+  return true
+}
+
+function archiveDisposition(vid) {
+  const disp = dispositions[vid]
+  if (!disp || !disp.steps || !disp.steps.every(s => s.status === 'completed')) return
+  const contacts = contactRecords[vid] || []
+  const completedAt = disp.steps[disp.steps.length - 1].time || Date.now()
+  const archive = {
+    id: disp.id || Date.now(),
+    vehicleId: vid,
+    createdAt: disp.createdAt,
+    completedAt: completedAt,
+    steps: JSON.parse(JSON.stringify(disp.steps)),
+    result: disp.result,
+    contacts: JSON.parse(JSON.stringify(contacts)),
+    note: disp.note || '',
+    isRelapse: isRelapse(VEHICLES.find(x => x.id === vid) || {})
+  }
+  if (!dispositionHistory[vid]) dispositionHistory[vid] = []
+  dispositionHistory[vid].push(archive)
+  saveToStorage()
+}
+
+function getDispositionRounds(vid) {
+  const rounds = []
+  if (dispositionHistory[vid]) {
+    dispositionHistory[vid].forEach(r => rounds.push(r))
+  }
+  const disp = dispositions[vid]
+  if (disp && disp.steps) {
+    rounds.push({
+      id: 'current',
+      vehicleId: vid,
+      createdAt: disp.createdAt,
+      completedAt: disp.steps.every(s => s.status === 'completed') ? (disp.steps[disp.steps.length - 1].time || null) : null,
+      steps: disp.steps,
+      result: disp.result,
+      contacts: contactRecords[vid] || [],
+      note: disp.note || '',
+      isRelapse: false,
+      isCurrent: true
+    })
+  }
+  rounds.sort((a, b) => a.createdAt - b.createdAt)
+  return rounds
+}
+
+function formatTimeStr(ts) {
+  if (!ts) return '-'
+  if (typeof ts === 'number') return new Date(ts).toLocaleString('zh-CN')
+  return ts
+}
+
+function renderDispositionHistory(v) {
+  const rounds = getDispositionRounds(v.id)
+  if (rounds.length === 0) return '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:.85rem">暂无处置记录</div>'
+  
+  return rounds.map((r, idx) => {
+    const isCurrent = r.isCurrent
+    const startStr = formatTimeStr(r.createdAt)
+    const endStr = formatTimeStr(r.completedAt)
+    const completedCount = r.steps.filter(s => s.status === 'completed').length
+    const totalCount = r.steps.length
+    const successContacts = r.contacts.filter(c => c.status === 'success').length
+    const failedContacts = r.contacts.filter(c => c.status === 'failed').length
+    const relapseBadge = r.isRelapse ? '<span class="tag orange" style="margin-left:6px">♻️ 复发</span>' : ''
+    const currentBadge = isCurrent ? '<span class="tag blue" style="margin-left:6px">当前轮</span>' : ''
+    
+    return `
+      <div class="followup-item" style="${isCurrent ? 'border-left:3px solid var(--cyan)' : ''}">
+        <div class="followup-header">
+          <span style="font-weight:600;color:var(--text-primary)">第 ${idx + 1} 轮处置${relapseBadge}${currentBadge}</span>
+          <span class="followup-time">进度 ${completedCount}/${totalCount}</span>
+        </div>
+        <div class="followup-content">
+          <strong>开始时间：</strong>${startStr}<br>
+          <strong>完成时间：</strong>${endStr}<br>
+          <strong>联系记录：</strong>已接通 ${successContacts} 次 / 未接通 ${failedContacts} 次
+          ${r.note ? '<br><strong>备注：</strong>' + r.note : ''}
+          ${r.result ? '<br><strong>处置结果：</strong>' + r.result : ''}
+        </div>
+        <div class="followup-meta" style="margin-top:8px">
+          ${r.steps.map((s, i) => `
+            <span style="color:${s.status === 'completed' ? 'var(--green)' : 'var(--text-muted)'}">
+              ${s.status === 'completed' ? '✅' : '⬜'} ${s.title}
+            </span>
+          `).join('')}
+        </div>
+      </div>
+    `
+  }).reverse().join('')
 }
 
 function getCauses(v) {
@@ -662,6 +792,12 @@ function toggleWatchFilter() {
   applyFilters()
 }
 
+function toggleRelapseFilter() {
+  relapseFilter = !relapseFilter
+  document.getElementById('filterRelapse').classList.toggle('active', relapseFilter)
+  applyFilters()
+}
+
 function initFilters() {
   const routes = [...new Set(VEHICLES.map(v => v.route))].sort()
   const carriers = [...new Set(VEHICLES.map(v => v.carrier))].sort()
@@ -694,6 +830,7 @@ function getTodoVehicles() {
     const status = getDispositionStatus(v)
     const disp = dispositions[v.id]
     const isDone = status === 'done'
+    const relapse = isRelapse(v)
     
     let include = false
     let priority = 0
@@ -707,6 +844,10 @@ function getTodoVehicles() {
       include = true
       priority = 9
       type = 'followup'
+    } else if (relapse) {
+      include = true
+      priority = level === 'red' ? 8.5 : 7.5
+      type = 'relapse'
     } else if (status === 'inprogress') {
       include = true
       priority = 6
@@ -731,7 +872,7 @@ function getTodoVehicles() {
     
     if (include) {
       if (watchList.has(v.id)) priority += 0.5
-      todos.push({ vehicle: v, priority, type, level, status })
+      todos.push({ vehicle: v, priority, type, level, status, relapse })
     }
   })
   todos.sort((a, b) => b.priority - a.priority)
@@ -752,6 +893,7 @@ function getFilteredVehicles() {
     if (warning && getWarningLevel(v) !== warning) return false
     if (disposition && getDispositionStatus(v) !== disposition) return false
     if (watchFilter && !watchList.has(v.id)) return false
+    if (relapseFilter && !isRelapse(v)) return false
     return true
   })
 
@@ -821,9 +963,14 @@ function renderTodo() {
     const v = t.vehicle
     const causes = getCauses(v)
     const statusLabels = {overdue:'已超时',followup:'待跟进',inprogress:'处置中'}
-    const statusLabel = statusLabels[t.status] || (t.level === 'red' ? '红色预警' : t.level === 'orange' ? '橙色预警' : '待处置')
-    const urgentClass = t.type === 'critical' ? 'red' : t.type === 'overdue' ? 'purple' : t.type === 'followup' ? 'blue' : 'orange'
-    const flagIcon = t.type === 'critical' ? '🔴' : t.type === 'overdue' ? '⏰' : t.type === 'followup' ? '🔔' : '🟠'
+    let statusLabel = statusLabels[t.status] || (t.level === 'red' ? '红色预警' : t.level === 'orange' ? '橙色预警' : '待处置')
+    let urgentClass = t.type === 'critical' ? 'red' : t.type === 'overdue' ? 'purple' : t.type === 'followup' ? 'blue' : 'orange'
+    let flagIcon = t.type === 'critical' ? '🔴' : t.type === 'overdue' ? '⏰' : t.type === 'followup' ? '🔔' : '🟠'
+    if (t.type === 'relapse') {
+      statusLabel = (t.level === 'red' ? '🔴' : '🟠') + ' 复发预警'
+      urgentClass = t.level === 'red' ? 'red' : 'orange'
+      flagIcon = '♻️'
+    }
     return `
       <div class="todo-card ${t.type}" onclick="openDisposition('${v.id}')">
         <div class="todo-flag">${flagIcon}</div>
@@ -845,6 +992,9 @@ function getShiftSummaryData() {
     overdue: [],
     noAnswer: [],
     pendingReview: [],
+    relapse: [],
+    relapseRed: [],
+    relapseOrange: [],
     byRoute: {},
     byCarrier: {}
   }
@@ -854,6 +1004,7 @@ function getShiftSummaryData() {
     const status = getDispositionStatus(v)
     const contacts = contactRecords[v.id] || []
     const lastContact = contacts[0]
+    const relapse = isRelapse(v)
     
     const isNoAnswer = lastContact && lastContact.status === 'failed'
     
@@ -862,10 +1013,15 @@ function getShiftSummaryData() {
     if (status === 'overdue') summary.overdue.push(v)
     if (isNoAnswer) summary.noAnswer.push(v)
     if (status === 'followup') summary.pendingReview.push(v)
+    if (relapse) {
+      summary.relapse.push(v)
+      if (level === 'red') summary.relapseRed.push(v)
+      else summary.relapseOrange.push(v)
+    }
     
     if (!summary.byRoute[v.route]) {
       summary.byRoute[v.route] = {
-        red: 0, orange: 0, overdue: 0, noAnswer: 0, pendingReview: 0, total: 0
+        red: 0, orange: 0, overdue: 0, noAnswer: 0, pendingReview: 0, relapse: 0, total: 0
       }
     }
     summary.byRoute[v.route].total++
@@ -874,10 +1030,11 @@ function getShiftSummaryData() {
     if (status === 'overdue') summary.byRoute[v.route].overdue++
     if (isNoAnswer) summary.byRoute[v.route].noAnswer++
     if (status === 'followup') summary.byRoute[v.route].pendingReview++
+    if (relapse) summary.byRoute[v.route].relapse++
     
     if (!summary.byCarrier[v.carrier]) {
       summary.byCarrier[v.carrier] = {
-        red: 0, orange: 0, overdue: 0, noAnswer: 0, pendingReview: 0, total: 0
+        red: 0, orange: 0, overdue: 0, noAnswer: 0, pendingReview: 0, relapse: 0, total: 0
       }
     }
     summary.byCarrier[v.carrier].total++
@@ -886,6 +1043,7 @@ function getShiftSummaryData() {
     if (status === 'overdue') summary.byCarrier[v.carrier].overdue++
     if (isNoAnswer) summary.byCarrier[v.carrier].noAnswer++
     if (status === 'followup') summary.byCarrier[v.carrier].pendingReview++
+    if (relapse) summary.byCarrier[v.carrier].relapse++
   })
   
   return summary
@@ -898,16 +1056,28 @@ function generateShiftSummaryText() {
   let text = '【冷链调度交班报告】\n'
   text += '生成时间：' + now + '\n\n'
   text += '📊 总体情况：\n'
-  text += '  🔴 红色预警：' + s.red.length + ' 辆\n'
-  text += '  🟠 橙色预警：' + s.orange.length + ' 辆\n'
+  text += '  🔴 红色预警：' + s.red.length + ' 辆 (其中复发' + s.relapseRed.length + ')\n'
+  text += '  🟠 橙色预警：' + s.orange.length + ' 辆 (其中复发' + s.relapseOrange.length + ')\n'
   text += '  ⏰ 超时未跟进：' + s.overdue.length + ' 辆\n'
   text += '  📞 已联系未接通：' + s.noAnswer.length + ' 辆\n'
-  text += '  🔔 待复核跟进：' + s.pendingReview.length + ' 辆\n\n'
+  text += '  🔔 待复核跟进：' + s.pendingReview.length + ' 辆\n'
+  text += '  ♻️  复发预警：' + s.relapse.length + ' 辆\n\n'
+  
+  if (s.relapse.length > 0) {
+    text += '♻️  复发预警车辆（处置后再次升温）：\n'
+    s.relapse.forEach(v => {
+      const lvl = getWarningLevel(v) === 'red' ? '红' : '橙'
+      text += '  ' + v.plate + ' - ' + v.route + ' - ' + v.cargo + ' - [' + lvl + '] 当前' + formatTemp(v.currentTemp) + '°C\n'
+    })
+    text += '\n'
+  }
   
   if (s.red.length > 0) {
     text += '🔴 红色预警车辆：\n'
     s.red.forEach(v => {
-      text += '  ' + v.plate + ' - ' + v.route + ' - ' + v.cargo + ' - 当前' + formatTemp(v.currentTemp) + '°C\n'
+      text += '  ' + v.plate + ' - ' + v.route + ' - ' + v.cargo + ' - 当前' + formatTemp(v.currentTemp) + '°C'
+      if (isRelapse(v)) text += ' [复发]'
+      text += '\n'
     })
     text += '\n'
   }
@@ -928,27 +1098,27 @@ function generateShiftSummaryText() {
     text += '\n'
   }
   
-  const routesWithIssues = Object.entries(s.byRoute).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0 || d.noAnswer > 0 || d.pendingReview > 0)
+  const routesWithIssues = Object.entries(s.byRoute).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0 || d.noAnswer > 0 || d.pendingReview > 0 || d.relapse > 0)
   if (routesWithIssues.length > 0) {
     text += '🛣️  按线路汇总：\n'
     routesWithIssues.forEach(([route, data]) => {
       text += '  ' + route + '：\n'
-      text += '    红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' 未接' + data.noAnswer + ' 待复' + data.pendingReview + ' / 共' + data.total + '辆\n'
+      text += '    红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' 未接' + data.noAnswer + ' 待复' + data.pendingReview + ' 复发' + data.relapse + ' / 共' + data.total + '辆\n'
     })
     text += '\n'
   }
   
-  const carriersWithIssues = Object.entries(s.byCarrier).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0 || d.noAnswer > 0 || d.pendingReview > 0)
+  const carriersWithIssues = Object.entries(s.byCarrier).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0 || d.noAnswer > 0 || d.pendingReview > 0 || d.relapse > 0)
   if (carriersWithIssues.length > 0) {
     text += '🚚 按承运商汇总：\n'
     carriersWithIssues.forEach(([carrier, data]) => {
       text += '  ' + carrier + '：\n'
-      text += '    红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' 未接' + data.noAnswer + ' 待复' + data.pendingReview + ' / 共' + data.total + '辆\n'
+      text += '    红' + data.red + ' 橙' + data.orange + ' 超时' + data.overdue + ' 未接' + data.noAnswer + ' 待复' + data.pendingReview + ' 复发' + data.relapse + ' / 共' + data.total + '辆\n'
     })
     text += '\n'
   }
   
-  text += '💡 交班建议：请下一班优先跟进红色预警和超时车辆，及时联系未接通司机，按时完成跟进复核。'
+  text += '💡 交班建议：请下一班优先跟进♻️复发预警和🔴红色预警车辆，及时处理⏰超时车辆，联系📞未接通司机，按时完成🔔跟进复核。'
   
   return text
 }
@@ -982,12 +1152,12 @@ function renderShiftSummary() {
   `).join('') + (arr.length > max ? `<li style="color:var(--text-muted);font-style:italic">...还有 ${arr.length - max} 辆</li>` : '')
   
   const renderDetailTable = (data, nameKey) => {
-    const entries = Object.entries(data).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0 || d.noAnswer > 0 || d.pendingReview > 0)
+    const entries = Object.entries(data).filter(([_,d]) => d.red > 0 || d.orange > 0 || d.overdue > 0 || d.noAnswer > 0 || d.pendingReview > 0 || d.relapse > 0)
     if (entries.length === 0) return '<div style="color:var(--text-muted);font-size:.75rem">暂无异常</div>'
     return `
       <table class="detail-table">
         <thead>
-          <tr><th>${nameKey}</th><th>红</th><th>橙</th><th>超时</th><th>未接</th><th>待复</th><th>总计</th></tr>
+          <tr><th>${nameKey}</th><th>红</th><th>橙</th><th>超时</th><th>未接</th><th>待复</th><th>复发</th><th>总计</th></tr>
         </thead>
         <tbody>
           ${entries.map(([name, d]) => `
@@ -998,6 +1168,7 @@ function renderShiftSummary() {
               <td class="purple">${d.overdue}</td>
               <td class="orange">${d.noAnswer}</td>
               <td class="blue">${d.pendingReview}</td>
+              <td class="orange">${d.relapse}</td>
               <td>${d.total}</td>
             </tr>
           `).join('')}
@@ -1007,6 +1178,11 @@ function renderShiftSummary() {
   }
   
   grid.innerHTML = `
+    <div class="summary-card">
+      <h4>♻️ 复发预警</h4>
+      <div class="count orange">${s.relapse.length}</div>
+      <ul class="summary-list">${s.relapse.length > 0 ? renderList(s.relapse) : '<li><span>暂无</span></li>'}</ul>
+    </div>
     <div class="summary-card">
       <h4>🔴 红色预警</h4>
       <div class="count red">${s.red.length}</div>
@@ -1067,14 +1243,15 @@ function renderList() {
     const isHandled = disp && disp.steps && disp.steps.every(s => s.status === 'completed')
     const dispStatus = getDispositionStatus(v)
     const watched = watchList.has(v.id)
+    const relapse = isRelapse(v)
 
     return `
-      <div class="vehicle-row warning-${level} ${watched ? 'watched' : ''}" onclick="openDisposition('${v.id}')">
+      <div class="vehicle-row warning-${level} ${watched ? 'watched' : ''} ${relapse ? 'relapse' : ''}" onclick="openDisposition('${v.id}')">
         <div class="risk-indicator"></div>
         <div class="cell watch-cell">
           <button class="watch-btn ${watched ? 'active' : ''}" onclick="toggleWatch('${v.id}', event)">${watched ? '⭐' : '☆'}</button>
         </div>
-        <div class="cell cell-plate">${v.plate}</div>
+        <div class="cell cell-plate">${v.plate}${relapse ? ' <span class="tag orange" style="font-size:.65rem;padding:1px 5px">♻️复发</span>' : ''}</div>
         <div class="cell cell-route">${v.route}</div>
         <div class="cell cell-carrier">${v.carrier}</div>
         <div class="cell cell-cargo"><span class="cargo-tag">${v.cargoTag}</span>${v.cargo}</div>
@@ -1330,7 +1507,11 @@ function openDisposition(vehicleId) {
   if (!v) return
   const level = getWarningLevel(v)
   const causes = getCauses(v)
-  if (!dispositions[v.id]) {
+  const relapse = isRelapse(v)
+  if (!dispositions[v.id] || (dispositions[v.id].steps && dispositions[v.id].steps.every(s => s.status === 'completed') && relapse)) {
+    if (dispositions[v.id] && dispositions[v.id].steps && dispositions[v.id].steps.every(s => s.status === 'completed')) {
+      archiveDisposition(v.id)
+    }
     dispositions[v.id] = {
       vehicleId: v.id,
       steps: [
@@ -1343,7 +1524,7 @@ function openDisposition(vehicleId) {
       createdAt: Date.now()
     }
     saveToStorage()
-    addEvent(v.id, 'disposition', '开始处置流程', 'green')
+    addEvent(v.id, 'disposition', relapse ? '复发预警：重新开始处置流程' : '开始处置流程', 'green')
   }
   const disp = dispositions[v.id]
 
@@ -1361,6 +1542,7 @@ function openDisposition(vehicleId) {
       <div class="modal-title">
         <span>${v.plate}</span>
         <span style="font-size:.8rem;color:var(--text-secondary)">${v.route} · ${v.carrier}</span>
+        ${relapse ? '<span class="tag orange" style="margin-left:6px">♻️ 复发预警</span>' : ''}
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <button class="modal-watch ${watched ? 'active' : ''}" onclick="toggleWatch('${v.id}', event)">${watched ? '⭐ 已关注' : '☆ 关注'}</button>
@@ -1520,6 +1702,11 @@ function openDisposition(vehicleId) {
           <h4 style="font-size:.9rem;color:var(--text-primary);margin-bottom:12px">📜 历史跟进记录</h4>
           ${renderFollowUpHistory(v.id)}
         </div>
+
+        <div class="followup-list" style="margin-top:20px">
+          <h4 style="font-size:.9rem;color:var(--text-primary);margin-bottom:12px">🔄 多轮处置历史</h4>
+          ${renderDispositionHistory(v)}
+        </div>
       </div>
     </div>
   `
@@ -1542,14 +1729,15 @@ function completeStep(vehicleId, stepIndex) {
   const disp = dispositions[vehicleId]
   if (!disp) return
   disp.steps[stepIndex].status = 'completed'
-  disp.steps[stepIndex].time = new Date().toLocaleTimeString()
+  disp.steps[stepIndex].time = Date.now()
   const v = VEHICLES.find(v=>v.id===vehicleId)
-  addEvent(vehicleId, 'disposition', `处置步骤 ${stepIndex+1}: ${disp.steps[stepIndex].title} 已完成`, 'green')
+  addEvent(vehicleId, 'disposition', '处置步骤 ' + (stepIndex+1) + ': ' + disp.steps[stepIndex].title + ' 已完成', 'green')
   openDisposition(vehicleId)
   const allDone = disp.steps.every(s => s.status === 'completed')
   if (allDone) {
-    showToast(`${v.plate} 处置完成`, 'green')
+    showToast(v.plate + ' 处置完成', 'green')
     addEvent(vehicleId, 'disposition', '全部处置步骤已完成', 'green')
+    archiveDisposition(vehicleId)
     renderList()
   }
   saveToStorage()
@@ -1713,9 +1901,10 @@ function simulateData() {
 
     const newLevel = getWarningLevel(v)
     if (newLevel !== prevState && (newLevel === 'red' || newLevel === 'orange')) {
-      showToast(`${v.plate} ${newLevel === 'red' ? '红色' : '橙色'}预警！`, newLevel)
+      showToast(v.plate + ' ' + (newLevel === 'red' ? '红色' : '橙色') + '预警！', newLevel)
       playAlert(newLevel)
-      addEvent(v.id, 'warning', `升级为${newLevel === 'red' ? '红色' : '橙色'}预警`, newLevel)
+      addEvent(v.id, 'warning', '升级为' + (newLevel === 'red' ? '红色' : '橙色') + '预警', newLevel)
+      checkAndMarkRelapse(v)
     }
     lastWarningState[v.id] = newLevel
   })
